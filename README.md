@@ -1,6 +1,7 @@
 # ⚡ QuantLab Pro: Multi-Agent Quantitative ML Research Platform
 
 [![Live Streamlit App](https://img.shields.io/badge/Live%20App-QuantLab%20Pro-7c3aed?style=for-the-badge&logo=streamlit&logoColor=white)](https://quantlab-pro-2dbdnpq8kgkvndauqsicc9.streamlit.app/)
+[![GitHub CI Pipeline](https://img.shields.io/github/actions/workflow/status/Dhanya562004/quantlab-pro/ci.yml?branch=main&style=for-the-badge&logo=github&label=CI%20Pipeline)](https://github.com/Dhanya562004/quantlab-pro/actions)
 [![GitHub Repository](https://img.shields.io/badge/GitHub-Dhanya562004%2Fquantlab--pro-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Dhanya562004/quantlab-pro)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white)](https://pytorch.org/)
@@ -8,11 +9,13 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
 > [!IMPORTANT]
-> **Live Application URL**: 🚀 [https://quantlab-pro-2dbdnpq8kgkvndauqsicc9.streamlit.app/](https://quantlab-pro-2dbdnpq8kgkvndauqsicc9.streamlit.app/)
+> 🌐 **Live Interactive App**: 🚀 [**https://quantlab-pro-2dbdnpq8kgkvndauqsicc9.streamlit.app/**](https://quantlab-pro-2dbdnpq8kgkvndauqsicc9.streamlit.app/)
 > 
-> **QuantLab Pro** is an institutional-grade quantitative machine learning research platform designed around multi-agent orchestration, leakage-resistant feature engineering, reproducible experiment tracking, and Model Context Protocol (MCP) tool integration.
+> 📁 **GitHub Repository**: 📦 [**https://github.com/Dhanya562004/quantlab-pro.git**](https://github.com/Dhanya562004/quantlab-pro)
 > 
-> Aligned with **Tower Research Capital's Intern - AI/ML** core competencies, QuantLab Pro provides a complete test-driven Python research framework for market time-series analysis, baseline & neural network model evaluation, backtest simulation, and MLOps inference.
+> **QuantLab Pro** is an institutional-grade quantitative machine learning research platform built around multi-agent orchestration, leakage-resistant feature engineering, reproducible experiment tracking, and Model Context Protocol (MCP) tool integration.
+> 
+> Designed to align directly with **Tower Research Capital's Intern - AI/ML** key competencies, QuantLab Pro provides a complete test-driven Python research workspace for financial time-series modeling, PyTorch neural networks, backtest simulations, and REST/MCP MLOps infrastructure.
 
 ---
 
