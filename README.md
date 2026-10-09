@@ -1,167 +1,181 @@
 # ⚡ QuantLab Pro: Multi-Agent Quantitative ML Research Platform
 
-[![CI Pipeline](https://github.com/Dhanya562004/quantlab-pro/actions/workflows/ci.yml/badge.svg)](https://github.com/Dhanya562004/quantlab-pro/actions)
-[![Python 3.11+](https://img.shields.io/badge/python-3.11+-purple.svg)](https://www.python.org/)
-[![Streamlit](https://img.shields.io/badge/streamlit-1.30+-purple.svg)](https://streamlit.io/)
-[![MCP](https://img.shields.io/badge/MCP-Official%20SDK-blueviolet.svg)](https://modelcontextprotocol.io/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
+[![Live Streamlit App](https://img.shields.io/badge/Live%20App-QuantLab%20Pro-7c3aed?style=for-the-badge&logo=streamlit&logoColor=white)](https://quantlab-pro-2dbdnpq8kgkvndauqsicc9.streamlit.app/)
+[![GitHub Repository](https://img.shields.io/badge/GitHub-Dhanya562004%2Fquantlab--pro-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Dhanya562004/quantlab-pro)
+[![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white)](https://pytorch.org/)
+[![Model Context Protocol](https://img.shields.io/badge/MCP-Official%20Python%20SDK-581c87?style=for-the-badge&logo=anthropic&logoColor=white)](https://modelcontextprotocol.io/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
-**QuantLab Pro** is an integrated quantitative machine learning research platform designed around multi-agent orchestration, leakage-resistant feature engineering, reproducible experiment tracking, and Model Context Protocol (MCP) tool integration. 
-
-Built to align with **Tower Research Capital's Intern - AI/ML** job competencies, QuantLab Pro provides a complete test-driven Python research framework for market time-series analysis, baseline & neural network model evaluation, backtest simulation, and MLOps inference.
+> [!IMPORTANT]
+> **Live Application URL**: 🚀 [https://quantlab-pro-2dbdnpq8kgkvndauqsicc9.streamlit.app/](https://quantlab-pro-2dbdnpq8kgkvndauqsicc9.streamlit.app/)
+> 
+> **QuantLab Pro** is an institutional-grade quantitative machine learning research platform designed around multi-agent orchestration, leakage-resistant feature engineering, reproducible experiment tracking, and Model Context Protocol (MCP) tool integration.
+> 
+> Aligned with **Tower Research Capital's Intern - AI/ML** core competencies, QuantLab Pro provides a complete test-driven Python research framework for market time-series analysis, baseline & neural network model evaluation, backtest simulation, and MLOps inference.
 
 ---
 
-## 🏛️ System Architecture
+## 🏛️ System Architecture Topology
 
 QuantLab Pro coordinates a deterministic multi-agent pipeline passing typed Pydantic state across 6 specialized research agents:
 
 ```mermaid
 graph TD
-    subgraph Data Provenance & Validation
-        A1[Synthetic Generator] --> B[Data Quality Agent]
-        A2[CSV Upload] --> B
-        A3[yfinance Download] --> B
+    subgraph Provenance & Validation Layer
+        A1[Deterministic Synthetic Generator] --> B[1. Data Quality Agent]
+        A2[CSV Upload Validator] --> B
+        A3[yfinance Market Data] --> B
     end
 
-    subgraph Multi-Agent Orchestrator
-        B -- Validation Report --> C[Quant Research Planner Agent]
-        C -- Experiment Plan --> D[Feature Engineering Agent]
-        D -- Chronological Splits --> E[Model Training Agent]
-        E -- Trained Model --> F[Evaluation & Risk Agent]
-        F -- Metrics & Backtest --> G[Experiment Auditor Agent]
+    subgraph Multi-Agent Orchestration Engine
+        B -- Validation Report --> C[2. Quant Research Planner Agent]
+        C -- Research Plan --> D[3. Feature Engineering Agent]
+        D -- Chronological Splits --> E[4. Model Training Agent]
+        E -- Trained Model --> F[5. Evaluation & Risk Agent]
+        F -- Metrics & Backtest --> G[6. Experiment Auditor Agent]
     end
 
-    subgraph Persistence & MLOps
+    subgraph MLOps & Persistence Layer
         G --> H[(SQLite Database)]
-        G --> I[JSON Manifest Export]
-        H --> J[Streamlit Dashboard]
-        H --> K[FastAPI REST API]
-        H --> L[MCP Server - stdio]
+        G --> I[JSON Manifest Exporter]
+        H --> J[Streamlit Dashboard Terminal]
+        H --> K[FastAPI REST Service]
+        H --> L[MCP Stdio Server]
     end
 ```
 
 ---
 
-## 🔑 Primary Competencies Demonstrated
+## 🔑 Core Competencies & Feature Matrix
 
-| Competency | Implementation in QuantLab Pro |
-| :--- | :--- |
-| **Multi-Agent Systems & MCP** | 6 specialized agents, typed Pydantic state passing, allowlisted tool registry, official Python MCP SDK server & client. |
-| **Agentic Coding Workflows** | Complete developer guide (`AGENTIC_WORKFLOW_GUIDE.md`) for using Claude Code, Cursor, and Codex for refactoring and debugging. |
-| **Statistical & ML Algorithms** | Majority Class baseline, Logistic Regression, PyTorch MLP classifier, classification metrics, and research backtest engine. |
-| **MLOps & Reproducibility** | SHA-256 dataset fingerprinting, SQLite experiment store, JSON manifests, optional MLflow integration, and FastAPI REST endpoints. |
-| **Quantitative Finance** | Leakage-resistant target shifting, lagged indicators, chronological train/val/test splits, transaction cost penalties (bps), Sharpe ratio, and max drawdown. |
-
----
-
-## 🛠️ Data Provenance & Quantitative Validation
-
-QuantLab Pro provides 3 explicit dataset modes with full provenance tracking:
-1. **Synthetic Data**: Deterministic Geometric Brownian Motion generator with seed control (`quantlab/data/synthetic.py`).
-2. **CSV Upload**: User CSV validation with column standardization (`quantlab/data/loader.py`).
-3. **yfinance Download**: Optional live market data download with graceful error handling.
-
-Every dataset receives a **SHA-256 fingerprint** of raw values. The **Data Quality Agent** executes comprehensive quantitative audits:
-- Schema & column presence (`Date`, `Open`, `High`, `Low`, `Close`, `Volume`).
-- Timestamp ordering & strict ascending monotonicity.
-- Duplicate timestamp detection & missing value check.
-- Non-positive price validity and price boundary integrity (`High >= max(Open, Close)` and `Low <= min(Open, Close)`).
-- Return jump outlier detection.
-- Minimum sample size adequacy check.
+| Competency | Implementation Details | Module Location |
+| :--- | :--- | :--- |
+| **Multi-Agent Orchestration** | 6 specialized typed agents (`DataQuality`, `Planner`, `Feature`, `Training`, `Evaluation`, `Auditor`) with sequential state transitions and step tracing. | [`quantlab/agents/`](file:///quantlab/agents/) & [`quantlab/orchestration/`](file:///quantlab/orchestration/) |
+| **Leakage-Resistant ML** | Target shifted by $-h$, lagged technical indicators (RSI, MACD, Volatility ratios), chronological train/val/test splits, and scaler fit strictly on training data. | [`quantlab/features/builder.py`](file:///quantlab/features/builder.py) |
+| **Statistical & Neural ML** | Majority Class baseline, scikit-learn Logistic Regression, and PyTorch MLP classifier with fixed random seed reproducibility. | [`quantlab/models/`](file:///quantlab/models/) |
+| **Research Backtester** | Long/cash strategy simulation with transaction cost penalties (bps), Sharpe ratio, Sortino ratio, max drawdown, and equity curves. | [`quantlab/evaluation/backtest.py`](file:///quantlab/evaluation/backtest.py) |
+| **Official MCP Integration** | Native MCP server exposing allowlisted tools over stdio transport using official Python `mcp` SDK. | [`mcp_server/server.py`](file:///mcp_server/server.py) |
+| **MLOps & REST API** | SQLite experiment database, SHA-256 dataset fingerprinting, JSON reproducibility manifests, and FastAPI endpoints. | [`quantlab/storage/db.py`](file:///quantlab/storage/db.py) & [`api/main.py`](file:///api/main.py) |
+| **Agentic Coding Workflows** | Complete developer guide detailing Claude Code, Cursor, and Codex refactoring and debugging prompt workflows. | [`AGENTIC_WORKFLOW_GUIDE.md`](file:///AGENTIC_WORKFLOW_GUIDE.md) |
 
 ---
 
-## 🛡️ Leakage-Resistant ML Experiments
+## 🛡️ Data Provenance & Quantitative Validation Audit
 
-To guarantee zero look-ahead bias:
-- **Target Alignment**: Target $y_t = \text{sign}(\text{Close}_{t+h} - \text{Close}_t)$ is shifted by $-h$, ensuring feature row at $t$ strictly uses information available up to period $t$.
-- **Chronological Splits**: Data is split sequentially (e.g., 60% Train, 20% Val, 20% Test) without random shuffling.
-- **Preprocessing Scaler**: `StandardScaler` is fit **strictly** on the training split (`X_train`), then applied to `X_val` and `X_test`.
+QuantLab Pro enforces strict data quality and mathematical integrity before any model training:
 
-### Supported Model Architecture Comparison
-- **Baseline Majority Class**: Always predicts most frequent training class.
-- **Logistic Regression**: Scikit-learn L2-regularized linear baseline.
-- **PyTorch MLP Classifier**: Multi-layer neural network with BatchNorm, ReLU, Dropout, and Adam optimizer (`quantlab/models/pytorch_mlp.py`).
-
----
-
-## 🤖 6 Specialized Quantitative Research Agents
-
-1. `DataQualityAgent`: Validates dataset schema, pricing integrity, date ordering, and sample adequacy.
-2. `QuantResearchPlannerAgent`: Selects allowlisted model type, target horizon, and articulates research rationale.
-3. `FeatureEngineeringAgent`: Constructs 14 technical features (lags, rolling vol, RSI, MACD) and chronological dataset splits.
-4. `ModelTrainingAgent`: Trains selected model using fixed random seeds and records training duration.
-5. `EvaluationRiskAgent`: Evaluates held-out test split, computes backtest returns curve (with transaction costs in bps), and checks for suspicious accuracy (>90%) or class imbalance.
-6. `ExperimentAuditorAgent`: Compiles JSON reproducibility manifest and persists experiment run to SQLite database.
+- **Data Provenance Modes**:
+  1. `Synthetic`: Deterministic random-walk OHLCV generator with seed control.
+  2. `CSV Upload`: File parser with column standardization.
+  3. `yfinance`: Optional live historical market data downloader.
+- **Cryptographic Fingerprinting**: Calculates a SHA-256 checksum over raw dataset records.
+- **Quantitative Audit Checks (`validate_ohlcv_data`)**:
+  - Schema & Column Completeness (`Date`, `Open`, `High`, `Low`, `Close`, `Volume`).
+  - Strict Ascending Date Monotonicity & Duplicate Timestamp Detection.
+  - Price Validity ($Open, High, Low, Close > 0$) & Boundary Integrity ($High \ge \max(Open, Close)$ and $Low \le \min(Open, Close)$).
+  - Single-period return jump outlier detection ($> 5 \sigma$).
+  - Minimum sample size adequacy ($N \ge 100$).
 
 ---
 
-## 🛠️ Safe Tool-Calling & Official MCP Implementation
+## 🤖 The 6 Specialized Quantitative Research Agents
+
+```
+ ┌───────────────────────────┐      ┌───────────────────────────┐      ┌───────────────────────────┐
+ │ 1. Data Quality Agent     │ ───► │ 2. Research Planner Agent │ ───► │ 3. Feature Agent          │
+ │ Schema & Price Auditing   │      │ Model & Horizon Selection │      │ Features & Scaled Splits  │
+ └───────────────────────────┘      └───────────────────────────┘      └───────────────────────────┘
+               │                                                                     │
+               ▼                                                                     ▼
+ ┌───────────────────────────┐      ┌───────────────────────────┐      ┌───────────────────────────┐
+ │ 6. Auditor Agent          │ ◄─── │ 5. Evaluation & Risk Agent│ ◄─── │ 4. Model Training Agent   │
+ │ Manifest & SQLite Store   │      │ Held-Out Test & Backtest  │      │ PyTorch MLP & Baselines   │
+ └───────────────────────────┘      └───────────────────────────┘      └───────────────────────────┘
+```
+
+1. **`DataQualityAgent`**: Validates raw dataset schema, pricing boundaries, and date monotonicity.
+2. **`QuantResearchPlannerAgent`**: Selects model architecture from an allowlisted registry and formulates research plan.
+3. **`FeatureEngineeringAgent`**: Computes leakage-safe technical indicators and chronological train/val/test splits.
+4. **`ModelTrainingAgent`**: Fits baseline or PyTorch MLP model with fixed random seeds.
+5. **`EvaluationRiskAgent`**: Evaluates held-out test split, runs research backtest with transaction costs, and audits leakage flags.
+6. **`ExperimentAuditorAgent`**: Compiles JSON manifest and saves experiment run to SQLite database (`ExperimentStorage`).
+
+---
+
+## 🔌 Model Context Protocol (MCP) & Safe Tool Calling
 
 QuantLab Pro implements an allowlisted tool registry (`ToolRegistry`) with Pydantic argument schemas:
-- `dataset_summary`: Returns shape, date range, and SHA-256 fingerprint.
-- `validate_dataset`: Runs data quality audit.
-- `run_experiment`: End-to-end training and backtesting pipeline.
+
+- `dataset_summary`: Generates summary statistics and SHA-256 fingerprint.
+- `validate_dataset`: Executes quantitative data quality audit.
+- `run_experiment`: Runs end-to-end training and backtest pipeline.
 - `get_experiment_metrics`: Fetches metrics from SQLite database.
 - `get_experiment_manifest`: Retrieves JSON manifest from SQLite.
 
-### Running the MCP Server & Integration Client
-The official MCP Server (`mcp_server/server.py`) exposes these tools over stdio transport:
+### Running MCP Tools & Local Client
 ```bash
-# Run MCP Local Client Integration Verification
+# Run Local MCP Integration Client Verification
 python -m mcp_server.client
 
-# Launch MCP Server
+# Launch MCP Stdio Server
 python -m mcp_server.server
 ```
 
 ---
 
-## 🚀 Quick Start & Local Services
+## 🌐 FastAPI REST Inference & Monitoring Service
 
-### 1. Installation
+Run local inference REST API:
+```bash
+uvicorn api.main:app --reload --port 8000
+```
+
+| Endpoint | Method | Description |
+| :--- | :--- | :--- |
+| `/health` | `GET` | Service status & database connectivity check |
+| `/predict` | `POST` | Real-time feature vector inference -> prediction & confidence |
+| `/metrics/{experiment_id}` | `GET` | Fetch recorded metrics by experiment ID |
+| `/monitoring/distribution` | `GET` | Historical accuracy/Sharpe distribution & monitoring stats |
+
+---
+
+## ⚡ Quick Start & Setup Guide
+
+### 1. Clone & Install Dependencies
 ```bash
 git clone https://github.com/Dhanya562004/quantlab-pro.git
 cd quantlab-pro
 pip install -r requirements.txt
 ```
 
-### 2. Launch Streamlit Dashboard
+### 2. Launch Streamlit Dark Purple Dashboard Terminal
 ```bash
 streamlit run app.py
 ```
+> Access local dashboard in browser: `http://localhost:8501`
 
-### 3. Run PyTest Test Suite & Ruff Linter
+### 3. Run PyTest Test Suite (100% Passing)
 ```bash
 pytest -v
+```
+
+### 4. Run Ruff Linter
+```bash
 ruff check .
 ```
 
-### 4. Run Local FastAPI REST Service
-```bash
-uvicorn api.main:app --reload --port 8000
-```
-- API Health Endpoint: `GET http://localhost:8000/health`
-- Prediction Endpoint: `POST http://localhost:8000/predict`
-- Monitoring Endpoint: `GET http://localhost:8000/monitoring/distribution`
-
 ---
 
-## ☁️ Streamlit Community Cloud Deployment
+## 🚀 Live Streamlit Deployment
 
-To deploy this application to Streamlit Community Cloud:
-1. Push this repository to GitHub: `https://github.com/Dhanya562004/quantlab-pro.git`
-2. Log into [Streamlit Community Cloud](https://streamlit.io/cloud).
-3. Select **New App** -> choose `Dhanya562004/quantlab-pro` repository and `main` branch.
-4. Set Main File Path to `app.py`.
-5. Click **Deploy!**
-
-*Note: The Streamlit Community Cloud deployment runs the standalone dashboard. The local MCP server and FastAPI service run independently for local CLI or sub-process integration.*
+- **Live URL**: [https://quantlab-pro-2dbdnpq8kgkvndauqsicc9.streamlit.app/](https://quantlab-pro-2dbdnpq8kgkvndauqsicc9.streamlit.app/)
+- **Repository**: [https://github.com/Dhanya562004/quantlab-pro.git](https://github.com/Dhanya562004/quantlab-pro.git)
+- **Main Entry Point**: `app.py`
 
 ---
 
 ## 🔒 Educational Research Disclaimer
 
 **QuantLab Pro is designed exclusively for educational research, academic exploration, and technical demonstration.** 
-It does NOT provide investment advice, financial recommendations, or automated live trading capability. Historical simulated backtests do not guarantee future live trading results.
+It does NOT provide investment advice, financial recommendations, or automated live trading capability. Simulated backtests do not guarantee future live trading results.
