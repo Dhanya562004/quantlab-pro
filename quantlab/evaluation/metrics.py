@@ -33,11 +33,11 @@ def compute_classification_metrics(
 ) -> ClassificationMetrics:
     """
     Compute comprehensive classification metrics safely handling edge cases (single class, empty arrays).
-    
+
     Args:
         y_true: Ground truth target labels.
         y_pred: Predicted target labels.
-        
+
     Returns:
         ClassificationMetrics object.
     """
@@ -50,19 +50,19 @@ def compute_classification_metrics(
             confusion_matrix=[[0, 0], [0, 0]],
             per_class_report={},
         )
-        
+
     acc = float(accuracy_score(y_true, y_pred))
-    
+
     # Zero division handling for precision/recall/f1
     prec = float(precision_score(y_true, y_pred, zero_division=0, average="macro"))
     rec = float(recall_score(y_true, y_pred, zero_division=0, average="macro"))
     f1 = float(f1_score(y_true, y_pred, zero_division=0, average="macro"))
-    
+
     cm = confusion_matrix(y_true, y_pred, labels=[0, 1])
     cm_list = cm.tolist()
-    
+
     report_dict = classification_report(y_true, y_pred, labels=[0, 1], output_dict=True, zero_division=0)
-    
+
     return ClassificationMetrics(
         accuracy=round(acc, 4),
         precision=round(prec, 4),

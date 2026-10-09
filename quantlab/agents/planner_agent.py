@@ -19,7 +19,7 @@ class QuantResearchPlannerAgent(BaseAgent):
 
     def run(self, state: WorkflowState) -> WorkflowState:
         start_t = time.time()
-        
+
         # Check if validation passed
         if state.validation_report and not state.validation_report.is_valid:
             duration = (time.time() - start_t) * 1000
@@ -36,11 +36,11 @@ class QuantResearchPlannerAgent(BaseAgent):
         # Formulate feature & experiment configuration
         target_horizon = state.user_target_horizon
         model_choice = state.user_model_choice.lower().strip()
-        
+
         allowed_models = ["majority_class", "logistic_regression", "pytorch_mlp"]
         if model_choice not in allowed_models:
             model_choice = "logistic_regression"
-            
+
         config = FeatureConfig(
             lags=[1, 2, 3, 5],
             rolling_windows=[5, 10, 20],
@@ -52,20 +52,20 @@ class QuantResearchPlannerAgent(BaseAgent):
             val_ratio=0.2,
             test_ratio=0.2,
         )
-        
+
         rationale = (
             f"Formulated research plan for {state.raw_metadata.get('symbol', 'ASSET')} with target horizon h={target_horizon}. "
             f"Constructing 14 technical features (lags, rolling vol, RSI, MACD). "
             f"Using chronological 60/20/20 train/val/test splits. "
             f"Selected model architecture: '{model_choice}' with seed={state.user_seed}."
         )
-        
+
         state.feature_config = config
         state.selected_model_type = model_choice
         state.research_rationale = rationale
-        
+
         duration = (time.time() - start_t) * 1000
-        
+
         state.execution_trace.append(AgentStepTrace(
             step_index=len(state.execution_trace) + 1,
             agent_name=self.agent_name,
@@ -82,5 +82,5 @@ class QuantResearchPlannerAgent(BaseAgent):
                 "rationale": rationale,
             }
         ))
-        
+
         return state

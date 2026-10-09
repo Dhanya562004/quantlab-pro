@@ -20,7 +20,7 @@ def test_api_health_endpoint():
 def test_api_predict_endpoint():
     features = [0.1, -0.05, 0.02, 1.2, 0.4, -0.1, 0.05, 52.0, 0.01, 0.005, 0.005, 0.0, 0.0, 0.0]
     response = client.post("/predict", json={"features": features, "model_type": "logistic_regression"})
-    
+
     assert response.status_code == 200
     data = response.json()
     assert data["predicted_class"] in [0, 1]

@@ -38,46 +38,46 @@ def train_model(
 ) -> tuple[TrainedModelArtifact, Any]:
     """
     Unified trainer dispatching model training based on model_type.
-    
+
     Supported model types:
     - 'majority_class'
     - 'logistic_regression'
     - 'pytorch_mlp'
-    
+
     Args:
         model_type: Identifier string for model choice.
         splits: DatasetSplits containing X_train, y_train, X_val, y_val, X_test, y_test.
         hyperparameters: Dictionary of hyperparameter overrides.
         seed: Random seed for reproducibility.
-        
+
     Returns:
         Tuple of (TrainedModelArtifact, Model instance)
     """
     if hyperparameters is None:
         hyperparameters = {}
-        
+
     start_time = time.time()
     model_type_clean = model_type.lower().strip()
-    
+
     if model_type_clean in ["majority_class", "baseline"]:
         model = MajorityClassBaseline()
         model.fit(splits.X_train, splits.y_train)
         training_history = []
-        
+
     elif model_type_clean in ["logistic_regression", "logreg"]:
         c_val = float(hyperparameters.get("C", 1.0))
         max_iter = int(hyperparameters.get("max_iter", 1000))
         model = SklearnLogisticRegressionModel(C=c_val, max_iter=max_iter, seed=seed)
         model.fit(splits.X_train, splits.y_train)
         training_history = []
-        
+
     elif model_type_clean in ["pytorch_mlp", "mlp", "nn"]:
         hidden_dim = int(hyperparameters.get("hidden_dim", 32))
         lr = float(hyperparameters.get("learning_rate", 0.005))
         epochs = int(hyperparameters.get("epochs", 40))
         batch_size = int(hyperparameters.get("batch_size", 32))
         dropout_rate = float(hyperparameters.get("dropout_rate", 0.2))
-        
+
         model = PyTorchMLPClassifier(
             hidden_dim=hidden_dim,
             learning_rate=lr,
@@ -92,14 +92,14 @@ def train_model(
         raise ValueError(f"Unknown model_type '{model_type}'. Supported: ['majority_class', 'logistic_regression', 'pytorch_mlp']")
 
     duration = time.time() - start_time
-    
+
     # Calculate train & val accuracies
     y_train_pred = model.predict(splits.X_train)
     train_acc = float(np.mean(y_train_pred == splits.y_train)) if len(splits.y_train) > 0 else 0.0
-    
+
     y_val_pred = model.predict(splits.X_val)
     val_acc = float(np.mean(y_val_pred == splits.y_val)) if len(splits.y_val) > 0 else 0.0
-    
+
     artifact = TrainedModelArtifact(
         model_type=model_type_clean,
         hyperparameters=hyperparameters,
@@ -110,5 +110,5 @@ def train_model(
         training_history=training_history,
         model_object=model,
     )
-    
+
     return artifact, model

@@ -57,7 +57,7 @@ class MultiAgentOrchestrator:
     ) -> WorkflowState:
         """
         Execute end-to-end multi-agent quantitative workflow.
-        
+
         Args:
             df_raw: Raw OHLCV DataFrame.
             raw_metadata: Provenance metadata dictionary.
@@ -65,7 +65,7 @@ class MultiAgentOrchestrator:
             seed: Fixed random seed.
             target_horizon: Prediction forecast horizon in bars.
             transaction_cost_bps: Transaction cost per trade in bps.
-            
+
         Returns:
             Final WorkflowState object containing execution trace and results.
         """
@@ -81,10 +81,10 @@ class MultiAgentOrchestrator:
         for agent in self.agents:
             # Execute step
             state = agent.run(state)
-            
+
             # Check for halting conditions
             if state.error_message:
                 state.is_completed = False
                 break
-                
+
         return state

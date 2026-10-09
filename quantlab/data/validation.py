@@ -25,7 +25,7 @@ def validate_ohlcv_data(
 ) -> ValidationReport:
     """
     Run comprehensive quantitative data validation on an OHLCV dataset.
-    
+
     Checks:
     1. Schema & required columns
     2. Missing / NaN values
@@ -36,12 +36,12 @@ def validate_ohlcv_data(
     7. Invalid volume (Volume < 0)
     8. Outliers (excessive single-period price percentage jumps)
     9. Minimum sample size adequacy
-    
+
     Args:
         df: Input DataFrame.
         min_sample_size: Minimum required rows for modeling.
         outlier_threshold_std: Standard deviation multiplier for return outlier detection.
-        
+
     Returns:
         ValidationReport object containing pass status, errors, warnings, and audit log.
     """
@@ -49,11 +49,11 @@ def validate_ohlcv_data(
     warnings: list[str] = []
     audit_trail: list[dict[str, Any]] = []
     metrics: dict[str, Any] = {}
-    
+
     # 1. Required Columns Check
     required_cols = ["Date", "Open", "High", "Low", "Close", "Volume"]
     missing_cols = [c for c in required_cols if c not in df.columns]
-    
+
     if missing_cols:
         errors.append(f"Missing mandatory column(s): {missing_cols}")
         audit_trail.append({"step": "Schema Validation", "status": "FAIL", "message": f"Missing columns: {missing_cols}"})
@@ -65,10 +65,10 @@ def validate_ohlcv_data(
             audit_trail=audit_trail,
         )
     audit_trail.append({"step": "Schema Validation", "status": "PASS", "message": "All mandatory columns present."})
-    
+
     n_rows = len(df)
     metrics["total_rows"] = n_rows
-    
+
     # 2. Sample Size Check
     if n_rows < min_sample_size:
         errors.append(f"Insufficient sample size: dataset has {n_rows} rows, minimum required is {min_sample_size}.")
@@ -83,7 +83,7 @@ def validate_ohlcv_data(
     nan_counts = df[required_cols].isna().sum().to_dict()
     total_nans = sum(nan_counts.values())
     metrics["nan_counts"] = nan_counts
-    
+
     if total_nans > 0:
         if nan_counts["Close"] > 0 or nan_counts["Date"] > 0:
             errors.append(f"Missing values detected in critical columns: {nan_counts}")
@@ -102,17 +102,17 @@ def validate_ohlcv_data(
     else:
         metrics["start_date"] = date_series.min().strftime("%Y-%m-%d")
         metrics["end_date"] = date_series.max().strftime("%Y-%m-%d")
-        
+
         # Check monotonicity: strictly increasing date ordering
         diffs = date_series.diff().dropna()
         is_strictly_increasing = (diffs.dt.total_seconds() > 0).all() if len(diffs) > 0 else True
-        
+
         if not is_strictly_increasing:
             errors.append("Timestamps are not strictly in chronological ascending order.")
             audit_trail.append({"step": "Chronological Ordering", "status": "FAIL", "message": "Date column is out of order."})
         else:
             audit_trail.append({"step": "Chronological Ordering", "status": "PASS", "message": "Strictly ascending chronological order."})
-            
+
         # Check duplicate timestamps
         duplicates = date_series.duplicated().sum()
         metrics["duplicate_timestamps"] = int(duplicates)
@@ -127,7 +127,7 @@ def validate_ohlcv_data(
     non_positive = (df[price_cols] <= 0).sum().to_dict()
     total_non_pos = sum(non_positive.values())
     metrics["non_positive_prices"] = total_non_pos
-    
+
     if total_non_pos > 0:
         errors.append(f"Invalid non-positive price values detected: {non_positive}")
         audit_trail.append({"step": "Price Validity Check", "status": "FAIL", "message": f"Non-positive prices: {non_positive}"})
@@ -140,10 +140,10 @@ def validate_ohlcv_data(
     invalid_high_close = (df["High"] < df["Close"]).sum()
     invalid_low_open = (df["Low"] > df["Open"]).sum()
     invalid_low_close = (df["Low"] > df["Close"]).sum()
-    
+
     total_boundary_violations = invalid_high_low + invalid_high_open + invalid_high_close + invalid_low_open + invalid_low_close
     metrics["price_boundary_violations"] = int(total_boundary_violations)
-    
+
     if total_boundary_violations > 0:
         errors.append(f"Price boundary violations found: High < Low ({invalid_high_low}), High < Open ({invalid_high_open}), Low > Close ({invalid_low_close}).")
         audit_trail.append({"step": "Price Boundary Integrity", "status": "FAIL", "message": f"{total_boundary_violations} boundary violations."})
@@ -164,7 +164,7 @@ def validate_ohlcv_data(
         pct_returns = df["Close"].pct_change().dropna()
         mean_ret = pct_returns.mean()
         std_ret = pct_returns.std()
-        
+
         if std_ret > 0:
             z_scores = (pct_returns - mean_ret) / std_ret
             outlier_count = (z_scores.abs() > outlier_threshold_std).sum()

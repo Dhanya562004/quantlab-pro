@@ -31,7 +31,7 @@ def generate_synthetic_ohlcv(
 ) -> tuple[pd.DataFrame, dict[str, Any]]:
     """
     Generate deterministic synthetic OHLCV time-series data.
-    
+
     Args:
         symbol: Asset ticker name.
         n_bars: Number of trading periods (bars).
@@ -40,41 +40,41 @@ def generate_synthetic_ohlcv(
         initial_price: Starting asset price.
         volatility: Daily price return volatility (std dev).
         trend: Daily drift term.
-        
+
     Returns:
         Tuple of (DataFrame with OHLCV columns, Metadata dict).
     """
     rng = np.random.RandomState(seed)
-    
+
     # Generate dates (daily business calendar or continuous)
     start_dt = datetime.strptime(start_date, "%Y-%m-%d")
     dates = [start_dt + timedelta(days=i) for i in range(n_bars)]
-    
+
     # Geometric Brownian Motion log returns
     log_returns = trend + volatility * rng.randn(n_bars)
     # Ensure log return first day is zero
     log_returns[0] = 0.0
-    
+
     price_path = initial_price * np.exp(np.cumsum(log_returns))
-    
+
     # Construct High, Low, Open, Close, Volume realistically
     open_prices = price_path * (1 + 0.002 * rng.randn(n_bars))
     close_prices = price_path
-    
+
     # High must be >= max(Open, Close)
     high_extra = np.abs(0.008 * price_path * rng.randn(n_bars))
     high_prices = np.maximum(open_prices, close_prices) + high_extra
-    
+
     # Low must be <= min(Open, Close)
     low_extra = np.abs(0.008 * price_path * rng.randn(n_bars))
     low_prices = np.minimum(open_prices, close_prices) - low_extra
     low_prices = np.maximum(0.01, low_prices)  # Ensure strictly positive
-    
+
     # Volume: log-normal random variable scaled by volatility
     base_volume = 1_000_000
     volume = (base_volume * np.exp(0.5 * rng.randn(n_bars))).astype(int)
     volume = np.maximum(100, volume)
-    
+
     df = pd.DataFrame({
         "Date": [d.strftime("%Y-%m-%d") for d in dates],
         "Open": np.round(open_prices, 4),
@@ -83,9 +83,9 @@ def generate_synthetic_ohlcv(
         "Close": np.round(close_prices, 4),
         "Volume": volume,
     })
-    
+
     fingerprint = compute_dataset_fingerprint(df)
-    
+
     metadata = {
         "source": "synthetic",
         "symbol": symbol,
@@ -101,5 +101,5 @@ def generate_synthetic_ohlcv(
             "trend": trend,
         }
     }
-    
+
     return df, metadata

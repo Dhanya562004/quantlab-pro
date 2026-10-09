@@ -38,31 +38,31 @@ class WorkflowState(BaseModel):
 
     # Agent 1 Output: Data Quality
     validation_report: ValidationReport | None = None
-    
+
     # Agent 2 Output: Research Plan
     feature_config: FeatureConfig | None = None
     selected_model_type: str = Field(default="logistic_regression")
     research_rationale: str = Field(default="")
-    
+
     # Agent 3 Output: Feature Engineering & Splits
     splits: DatasetSplits | None = Field(default=None, exclude=True)
     aligned_sample_count: int = Field(default=0)
     feature_names: list[str] = Field(default_factory=list)
-    
+
     # Agent 4 Output: Model Training
     trained_artifact: TrainedModelArtifact | None = None
     trained_model_object: Any | None = Field(default=None, exclude=True)
-    
+
     # Agent 5 Output: Evaluation & Risk
     test_metrics: ClassificationMetrics | None = None
     backtest_result: BacktestResult | None = None
     risk_warnings: list[str] = Field(default_factory=list)
-    
+
     # Agent 6 Output: Audit & Manifest
     experiment_id: str = Field(default="")
     manifest: dict[str, Any] = Field(default_factory=dict)
     is_persisted: bool = Field(default=False)
-    
+
     # Trace log
     execution_trace: list[AgentStepTrace] = Field(default_factory=list)
     is_completed: bool = Field(default=False)

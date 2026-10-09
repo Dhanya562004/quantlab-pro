@@ -20,11 +20,11 @@ def load_csv_dataset(
 ) -> tuple[pd.DataFrame, dict[str, Any]]:
     """
     Load and parse a CSV file containing market OHLCV data.
-    
+
     Args:
         file_or_path: File path or file-like object.
         symbol: Custom label for the uploaded asset.
-        
+
     Returns:
         Tuple of (DataFrame, Provenance Metadata Dict)
     """
@@ -32,7 +32,7 @@ def load_csv_dataset(
         df = pd.read_csv(file_or_path)
     except Exception as e:
         raise ValueError(f"Failed to parse CSV file: {e!s}")
-        
+
     # Standardize column names (case-insensitive strip)
     col_map = {c: c.strip().capitalize() for c in df.columns}
     # Map common variants
@@ -50,26 +50,26 @@ def load_csv_dataset(
             col_map[orig] = "Close"
         elif c_clean in ["volume", "vol"]:
             col_map[orig] = "Volume"
-            
+
     df = df.rename(columns=col_map)
-    
+
     # Verify required columns presence
     missing = [col for col in REQUIRED_COLUMNS if col not in df.columns]
     if missing:
         raise ValueError(f"CSV missing mandatory required columns: {missing}. Expected {REQUIRED_COLUMNS}")
-        
+
     df = df[REQUIRED_COLUMNS].copy()
-    
+
     # Ensure Date column is formatted string
     df["Date"] = pd.to_datetime(df["Date"]).dt.strftime("%Y-%m-%d")
     df = df.sort_values("Date").reset_index(drop=True)
-    
+
     # Convert numerical columns
     for num_col in ["Open", "High", "Low", "Close", "Volume"]:
         df[num_col] = pd.to_numeric(df[num_col], errors="coerce")
-        
+
     fingerprint = compute_dataset_fingerprint(df)
-    
+
     metadata = {
         "source": "uploaded_csv",
         "symbol": symbol,
@@ -79,7 +79,7 @@ def load_csv_dataset(
         "fingerprint": fingerprint,
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
-    
+
     return df, metadata
 
 
@@ -90,15 +90,15 @@ def load_yfinance_dataset(
 ) -> tuple[pd.DataFrame, dict[str, Any]]:
     """
     Download historical market data from yfinance.
-    
+
     Args:
         symbol: Ticker symbol (e.g., 'AAPL', 'MSFT', 'SPY').
         start_date: ISO start date.
         end_date: ISO end date.
-        
+
     Returns:
         Tuple of (DataFrame, Provenance Metadata Dict)
-        
+
     Raises:
         RuntimeError if yfinance is not available or download fails.
     """
@@ -106,16 +106,16 @@ def load_yfinance_dataset(
         import yfinance as yf
     except ImportError:
         raise RuntimeError("yfinance library is not installed. Please install it to fetch live market data.")
-        
+
     try:
         ticker = yf.Ticker(symbol)
         df_raw = ticker.history(start=start_date, end=end_date, auto_adjust=True)
-        
+
         if df_raw.empty:
             raise ValueError(f"No historical data returned for ticker symbol '{symbol}' between {start_date} and {end_date}.")
-            
+
         df_raw = df_raw.reset_index()
-        
+
         # Standardize column mapping
         df = pd.DataFrame()
         df["Date"] = pd.to_datetime(df_raw["Date"]).dt.strftime("%Y-%m-%d")
@@ -124,11 +124,11 @@ def load_yfinance_dataset(
         df["Low"] = df_raw["Low"].round(4)
         df["Close"] = df_raw["Close"].round(4)
         df["Volume"] = df_raw["Volume"].astype(int)
-        
+
         df = df.sort_values("Date").reset_index(drop=True)
-        
+
         fingerprint = compute_dataset_fingerprint(df)
-        
+
         metadata = {
             "source": "yfinance",
             "symbol": symbol.upper(),
@@ -138,7 +138,7 @@ def load_yfinance_dataset(
             "fingerprint": fingerprint,
             "created_at": datetime.now(timezone.utc).isoformat(),
         }
-        
+
         return df, metadata
     except Exception as e:
         raise RuntimeError(f"Failed to download market data for ticker '{symbol}': {e!s}")

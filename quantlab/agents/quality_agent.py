@@ -19,7 +19,7 @@ class DataQualityAgent(BaseAgent):
 
     def run(self, state: WorkflowState) -> WorkflowState:
         start_t = time.time()
-        
+
         if state.df_raw is None or len(state.df_raw) == 0:
             duration = (time.time() - start_t) * 1000
             state.error_message = "Data Quality Agent Error: No dataset provided in state."
@@ -35,9 +35,9 @@ class DataQualityAgent(BaseAgent):
 
         report = validate_ohlcv_data(state.df_raw)
         state.validation_report = report
-        
+
         duration = (time.time() - start_t) * 1000
-        
+
         if not report.is_valid:
             state.error_message = f"Data Quality Validation Failed: {report.errors}"
             status = "FAIL"
@@ -60,5 +60,5 @@ class DataQualityAgent(BaseAgent):
                 "audit_steps": len(report.audit_trail),
             }
         ))
-        
+
         return state

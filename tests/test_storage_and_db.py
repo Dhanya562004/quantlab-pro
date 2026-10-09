@@ -20,7 +20,7 @@ def test_sqlite_save_and_retrieve(temp_db):
     exp_id = "EXP-TEST-100"
     manifest = {"exp_id": exp_id, "test": True}
     metrics = {"accuracy": 0.65, "f1_score": 0.62}
-    
+
     saved = temp_db.save_experiment(
         experiment_id=exp_id,
         symbol="BTC",
@@ -36,7 +36,7 @@ def test_sqlite_save_and_retrieve(temp_db):
         metrics=metrics,
     )
     assert saved is True
-    
+
     record = temp_db.get_experiment(exp_id)
     assert record is not None
     assert record.experiment_id == exp_id
@@ -51,6 +51,6 @@ def test_sqlite_clear_history(temp_db):
         sharpe_ratio=0.0, max_drawdown=0.0, manifest={}, metrics={}
     )
     assert len(temp_db.list_experiments()) == 1
-    
+
     temp_db.clear_all_experiments()
     assert len(temp_db.list_experiments()) == 0

@@ -7,25 +7,18 @@ Aligned to Tower Research Capital's Intern - AI/ML Job Description.
 """
 
 import json
-import time
-from typing import Dict, Any
-import numpy as np
+
 import pandas as pd
 import plotly.graph_objects as go
-import plotly.express as px
 import streamlit as st
 
 # Import QuantLab Pro Modules
-from quantlab.data.synthetic import generate_synthetic_ohlcv, compute_dataset_fingerprint
 from quantlab.data.loader import load_csv_dataset, load_yfinance_dataset
-from quantlab.data.validation import validate_ohlcv_data, ValidationReport
-from quantlab.features.builder import FeatureConfig, build_features_and_target, create_chronological_splits
-from quantlab.models.trainer import train_model
-from quantlab.evaluation.metrics import compute_classification_metrics
-from quantlab.evaluation.backtest import run_research_backtest
+from quantlab.data.synthetic import generate_synthetic_ohlcv
+from quantlab.data.validation import validate_ohlcv_data
 from quantlab.orchestration.engine import MultiAgentOrchestrator
-from quantlab.tools.registry import ToolRegistry
 from quantlab.storage.db import ExperimentStorage
+from quantlab.tools.registry import ToolRegistry
 
 # --- Page Configuration ---
 st.set_page_config(
@@ -43,7 +36,7 @@ ADVANCED_STYLING_CSS = """
     /* Global Body & Background */
     .stApp {
         background: #040208;
-        background-image: 
+        background-image:
             radial-gradient(at 15% 15%, rgba(88, 28, 135, 0.25) 0px, transparent 50%),
             radial-gradient(at 85% 20%, rgba(168, 85, 247, 0.15) 0px, transparent 50%),
             radial-gradient(at 50% 80%, rgba(14, 116, 144, 0.15) 0px, transparent 50%);
@@ -57,7 +50,7 @@ ADVANCED_STYLING_CSS = """
         border-right: 1px solid rgba(168, 85, 247, 0.2);
         box-shadow: 4px 0 24px rgba(0, 0, 0, 0.6);
     }
-    
+
     /* Neon Gradient Text Header */
     .hero-title {
         font-size: 2.6rem;
@@ -68,7 +61,7 @@ ADVANCED_STYLING_CSS = """
         letter-spacing: -0.02em;
         margin-bottom: 4px;
     }
-    
+
     .hero-subtitle {
         color: #a855f7;
         font-size: 1.15rem;
@@ -154,7 +147,7 @@ ADVANCED_STYLING_CSS = """
         border-left-color: #f43f5e;
         background: linear-gradient(90deg, rgba(244, 63, 94, 0.08) 0%, rgba(18, 9, 36, 0.8) 100%);
     }
-    
+
     .status-badge-pass {
         background: rgba(16, 185, 129, 0.2);
         color: #34d399;
@@ -210,7 +203,7 @@ ADVANCED_STYLING_CSS = """
         box-shadow: 0 0 25px rgba(168, 85, 247, 0.7);
         transform: translateY(-2px);
     }
-    
+
     /* Code and Pre */
     code, pre {
         font-family: 'JetBrains Mono', monospace !important;
@@ -288,7 +281,7 @@ st.sidebar.markdown(
 if nav_option == "📊 Overview":
     st.markdown("<div class='hero-title'>⚡ QuantLab Pro Terminal</div>", unsafe_allow_html=True)
     st.markdown("<div class='hero-subtitle'>Multi-Agent Orchestration & Leakage-Resistant Quantitative ML Architecture</div>", unsafe_allow_html=True)
-    
+
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         st.markdown(
@@ -336,10 +329,10 @@ if nav_option == "📊 Overview":
             """,
             unsafe_allow_html=True
         )
-        
+
     st.markdown("<br/>", unsafe_allow_html=True)
     st.markdown("### 🏛️ Core Platform Competencies")
-    
+
     c_a, c_b = st.columns(2)
     with c_a:
         st.markdown(
@@ -351,8 +344,8 @@ if nav_option == "📊 Overview":
                 </div>
                 <p style='color:#cbd5e1; font-size:0.92rem; line-height:1.6;'>
                     Executes deterministic workflows using 6 specialized quantitative agents:
-                    <b style='color:#c084fc;'>Data Quality</b>, <b style='color:#c084fc;'>Quant Research Planner</b>, 
-                    <b style='color:#c084fc;'>Feature Engineering</b>, <b style='color:#c084fc;'>Model Training</b>, 
+                    <b style='color:#c084fc;'>Data Quality</b>, <b style='color:#c084fc;'>Quant Research Planner</b>,
+                    <b style='color:#c084fc;'>Feature Engineering</b>, <b style='color:#c084fc;'>Model Training</b>,
                     <b style='color:#c084fc;'>Evaluation & Risk</b>, and <b style='color:#c084fc;'>Experiment Auditor</b>.
                 </p>
             </div>
@@ -367,8 +360,8 @@ if nav_option == "📊 Overview":
                     <h3 style='margin:0; font-size:1.2rem; color:#e9d5ff;'>Leakage-Resistant ML Pipelines</h3>
                 </div>
                 <p style='color:#cbd5e1; font-size:0.92rem; line-height:1.6;'>
-                    Prevents look-ahead bias with strict target shifting, lagged technical indicators, 
-                    and chronological train/validation/test splits. Preprocessing scalers are fit 
+                    Prevents look-ahead bias with strict target shifting, lagged technical indicators,
+                    and chronological train/validation/test splits. Preprocessing scalers are fit
                     <b style='color:#38bdf8;'>strictly on training split data only</b>.
                 </p>
             </div>
@@ -384,7 +377,7 @@ if nav_option == "📊 Overview":
                     <h3 style='margin:0; font-size:1.2rem; color:#e9d5ff;'>Official MCP Python SDK & Tool Registry</h3>
                 </div>
                 <p style='color:#cbd5e1; font-size:0.92rem; line-height:1.6;'>
-                    Exposes allowlisted domain tools (validation, features, training, metrics) via 
+                    Exposes allowlisted domain tools (validation, features, training, metrics) via
                     the official Model Context Protocol (MCP) server for integration with Cursor, Claude Code, or external clients.
                 </p>
             </div>
@@ -399,7 +392,7 @@ if nav_option == "📊 Overview":
                     <h3 style='margin:0; font-size:1.2rem; color:#e9d5ff;'>MLOps, Tracking & FastAPI Service</h3>
                 </div>
                 <p style='color:#cbd5e1; font-size:0.92rem; line-height:1.6;'>
-                    Provides SQLite persistence, JSON reproducibility manifests, optional MLflow integration, 
+                    Provides SQLite persistence, JSON reproducibility manifests, optional MLflow integration,
                     and a local FastAPI REST service for real-time model inference and monitoring.
                 </p>
             </div>
@@ -448,10 +441,10 @@ if nav_option == "📊 Overview":
 elif nav_option == "🔍 Data Lab":
     st.markdown("<div class='hero-title'>🔍 Data Lab & Validation Engine</div>", unsafe_allow_html=True)
     st.markdown("<div class='hero-subtitle'>Load market datasets, inspect SHA-256 provenance, and run quantitative quality audits.</div>", unsafe_allow_html=True)
-    
+
     st.markdown("<div class='glass-panel'>", unsafe_allow_html=True)
     data_source_mode = st.radio("Select Provenance Source Mode", ["Synthetic Generator", "Upload CSV File", "yfinance Download"], horizontal=True)
-    
+
     if data_source_mode == "Synthetic Generator":
         c1, c2, c3 = st.columns(3)
         with c1:
@@ -460,7 +453,7 @@ elif nav_option == "🔍 Data Lab":
             n_bars = st.slider("Number of Bars", min_value=150, max_value=2000, value=400, step=50)
         with c3:
             seed = st.number_input("Deterministic Seed", value=42, step=1)
-            
+
         if st.button("Generate Synthetic Dataset"):
             df_gen, meta_gen = generate_synthetic_ohlcv(symbol=sym, n_bars=n_bars, seed=seed)
             st.session_state["current_df"] = df_gen
@@ -487,7 +480,7 @@ elif nav_option == "🔍 Data Lab":
             s_date = st.text_input("Start Date", value="2023-01-01")
         with c3:
             e_date = st.text_input("End Date", value="2024-01-01")
-            
+
         if st.button("Download Historical Market Data"):
             with st.spinner("Downloading market data from yfinance..."):
                 try:
@@ -498,11 +491,11 @@ elif nav_option == "🔍 Data Lab":
                 except Exception as ex:
                     st.error(f"yfinance Download Error: {str(ex)}. Please select another source or verify internet connectivity.")
     st.markdown("</div>", unsafe_allow_html=True)
-    
+
     # Active Dataset Overview & Validation
     df_curr = st.session_state["current_df"]
     meta_curr = st.session_state["current_meta"]
-    
+
     st.markdown("### 📄 Provenance & Metadata Signature")
     m_col1, m_col2, m_col3, m_col4 = st.columns(4)
     m_col1.markdown(f"<div class='kpi-card'><div class='kpi-label'>SYMBOL</div><div class='kpi-value'>{meta_curr.get('symbol')}</div></div>", unsafe_allow_html=True)
@@ -513,11 +506,11 @@ elif nav_option == "🔍 Data Lab":
     st.markdown("<br/>", unsafe_allow_html=True)
     # Run Data Validation Audit
     val_report = validate_ohlcv_data(df_curr)
-    
+
     st.markdown("### 🛡️ Quantitative Validation Audit Report")
     if val_report.is_valid:
         st.markdown(
-            f"""
+            """
             <div style='background:rgba(16,185,129,0.12); border:1px solid #10b981; border-radius:12px; padding:16px; margin-bottom:20px;'>
                 <b style='color:#34d399; font-size:1.05rem;'>✅ Data Quality Audit Passed</b>
                 <p style='color:#e2e8f0; margin-top:4px; font-size:0.9rem;'>All critical price boundary, monotonicity, and schema integrity checks passed cleanly. Zero blocking errors.</p>
@@ -536,7 +529,7 @@ elif nav_option == "🔍 Data Lab":
         )
         for err in val_report.errors:
             st.error(f"🔴 **Error**: {err}")
-            
+
     if val_report.warnings:
         for warn in val_report.warnings:
             st.warning(f"⚠️ **Warning**: {warn}")
@@ -577,10 +570,10 @@ elif nav_option == "🔍 Data Lab":
 elif nav_option == "🧪 Experiment Lab":
     st.markdown("<div class='hero-title'>🧪 Quantitative Experiment Lab</div>", unsafe_allow_html=True)
     st.markdown("<div class='hero-subtitle'>Configure model architecture, prediction target horizon, and launch the multi-agent execution pipeline.</div>", unsafe_allow_html=True)
-    
+
     df_curr = st.session_state["current_df"]
     meta_curr = st.session_state["current_meta"]
-    
+
     st.markdown("<div class='glass-panel'>", unsafe_allow_html=True)
     c1, c2 = st.columns(2)
     with c1:
@@ -594,9 +587,9 @@ elif nav_option == "🧪 Experiment Lab":
     with c2:
         exp_seed = st.number_input("Deterministic Random Seed", value=42, step=1)
         tx_cost = st.number_input("Backtest Transaction Cost (bps)", value=10.0, step=1.0)
-        
+
     st.markdown("</div>", unsafe_allow_html=True)
-    
+
     if st.button("🚀 Launch Multi-Agent Workflow Execution"):
         with st.spinner("Multi-Agent Orchestrator executing sequential agent steps..."):
             orchestrator = MultiAgentOrchestrator()
@@ -609,7 +602,7 @@ elif nav_option == "🧪 Experiment Lab":
                 transaction_cost_bps=tx_cost,
             )
             st.session_state["latest_workflow_state"] = state
-            
+
         if state.is_completed:
             st.success(f"🎉 Workflow Execution Completed! Generated Experiment ID: `{state.experiment_id}`")
             st.info("Navigate to **🤖 Agent Trace** or **📈 Results & Risk** tabs to review execution details and held-out test evaluation.")
@@ -623,7 +616,7 @@ elif nav_option == "🧪 Experiment Lab":
 elif nav_option == "🤖 Agent Trace":
     st.markdown("<div class='hero-title'>🤖 Multi-Agent Execution Trace</div>", unsafe_allow_html=True)
     st.markdown("<div class='hero-subtitle'>Step-by-step state transition logs, step duration, decision rationales, and agent artifacts.</div>", unsafe_allow_html=True)
-    
+
     state = st.session_state.get("latest_workflow_state")
     if state is None:
         st.warning("No workflow execution recorded in current session. Please run an experiment in the **🧪 Experiment Lab** first.")
@@ -648,13 +641,13 @@ elif nav_option == "🤖 Agent Trace":
             """,
             unsafe_allow_html=True
         )
-        
+
         st.markdown("### Agent Execution Timeline")
         for trace in state.execution_trace:
             is_pass = trace.status == "PASS"
             box_class = "agent-trace-pass" if is_pass else "agent-trace-fail"
             badge_class = "status-badge-pass" if is_pass else "status-badge-fail"
-            
+
             st.markdown(
                 f"""
                 <div class='agent-trace-box {box_class}'>
@@ -686,22 +679,22 @@ elif nav_option == "🤖 Agent Trace":
 elif nav_option == "📈 Results & Risk":
     st.markdown("<div class='hero-title'>📈 Held-Out Evaluation & Risk Audit</div>", unsafe_allow_html=True)
     st.markdown("<div class='hero-subtitle'>Held-out test split classification accuracy, macro F1 score, backtest equity curve, and data leakage flags.</div>", unsafe_allow_html=True)
-    
+
     state = st.session_state.get("latest_workflow_state")
     if state is None or state.test_metrics is None:
         st.warning("No experiment results available. Run an experiment in the **🧪 Experiment Lab** first.")
     else:
         m = state.test_metrics
         b = state.backtest_result
-        
+
         c1, c2, c3, c4 = st.columns(4)
         c1.markdown(f"<div class='kpi-card'><div class='kpi-label'>HELD-OUT TEST ACCURACY</div><div class='kpi-value'>{m.accuracy * 100:.1f}%</div></div>", unsafe_allow_html=True)
         c2.markdown(f"<div class='kpi-card'><div class='kpi-label'>MACRO F1-SCORE</div><div class='kpi-value'>{m.f1_score:.2f}</div></div>", unsafe_allow_html=True)
         c3.markdown(f"<div class='kpi-card'><div class='kpi-label'>SHARPE RATIO</div><div class='kpi-value'>{b.sharpe_ratio:.2f}</div></div>", unsafe_allow_html=True)
         c4.markdown(f"<div class='kpi-card'><div class='kpi-label'>MAX DRAWDOWN</div><div class='kpi-value'>{b.max_drawdown * 100:.1f}%</div></div>", unsafe_allow_html=True)
-        
+
         st.markdown("<br/>", unsafe_allow_html=True)
-        
+
         r_col1, r_col2 = st.columns(2)
         with r_col1:
             st.markdown("### 📊 Classification Confusion Matrix")
@@ -711,10 +704,10 @@ elif nav_option == "📈 Results & Risk":
                 columns=["Pred Non-Pos (0)", "Pred Pos (1)"]
             )
             st.table(cm_df)
-            
+
             st.markdown("### 📋 Per-Class Performance Breakdown")
             st.json(m.per_class_report)
-            
+
         with r_col2:
             st.markdown("### 📈 Cumulative Strategy vs Benchmark Return")
             if b:
@@ -757,16 +750,16 @@ elif nav_option == "📈 Results & Risk":
 elif nav_option == "📜 Experiment History":
     st.markdown("<div class='hero-title'>📜 Experiment Persistence Store</div>", unsafe_allow_html=True)
     st.markdown("<div class='hero-subtitle'>SQLite database experiment runs, manifest viewer, export, and history reset.</div>", unsafe_allow_html=True)
-    
+
     storage = ExperimentStorage()
     runs = storage.list_experiments()
-    
+
     if not runs:
         st.info("No recorded experiments found in SQLite database.")
     else:
         df_runs = pd.DataFrame(runs)
         st.dataframe(df_runs, use_container_width=True)
-        
+
         st.markdown("<br/>", unsafe_allow_html=True)
         c1, c2 = st.columns(2)
         with c1:
@@ -799,10 +792,10 @@ elif nav_option == "📜 Experiment History":
 elif nav_option == "🛠️ MCP Tools":
     st.markdown("<div class='hero-title'>🛠️ Model Context Protocol (MCP) Registry</div>", unsafe_allow_html=True)
     st.markdown("<div class='hero-subtitle'>Inspect allowlisted tools, execute tool calls directly, and view Pydantic JSON schemas.</div>", unsafe_allow_html=True)
-    
+
     registry = ToolRegistry()
     tools = registry.list_tools()
-    
+
     st.markdown("### Allowlisted Domain Tools")
     for t in tools:
         with st.expander(f"Tool: `{t['name']}` - {t['description']}"):
@@ -811,9 +804,9 @@ elif nav_option == "🛠️ MCP Tools":
 
     st.markdown("---")
     st.markdown("### 🧪 Direct Tool Invocator")
-    
+
     tool_choice = st.selectbox("Select Tool to Invoke", [t["name"] for t in tools])
-    
+
     if tool_choice == "dataset_summary":
         sym = st.text_input("symbol", "MCP_BTC")
         n = st.number_input("n_bars", 200)
@@ -821,7 +814,7 @@ elif nav_option == "🛠️ MCP Tools":
         if st.button("Invoke dataset_summary"):
             res = registry.execute("dataset_summary", {"symbol": sym, "n_bars": n, "seed": s})
             st.json(res.model_dump())
-            
+
     elif tool_choice == "run_experiment":
         sym = st.text_input("symbol", "MCP_BTC")
         m_type = st.selectbox("model_type", ["logistic_regression", "pytorch_mlp", "majority_class"])
@@ -836,7 +829,7 @@ elif nav_option == "🛠️ MCP Tools":
 elif nav_option == "ℹ️ Developer Guide & About":
     st.markdown("<div class='hero-title'>ℹ️ Developer Guide & Project Architecture</div>", unsafe_allow_html=True)
     st.markdown("<div class='hero-subtitle'>Tower Research Capital alignment, agentic coding workflows, and local service execution.</div>", unsafe_allow_html=True)
-    
+
     st.markdown(
         """
         <div class='glass-panel'>
@@ -854,7 +847,7 @@ elif nav_option == "ℹ️ Developer Guide & About":
         """,
         unsafe_allow_html=True
     )
-    
+
     st.markdown("### 🤖 Agentic Coding Tool Workflow Guide")
     st.markdown(
         """
@@ -864,7 +857,7 @@ elif nav_option == "ℹ️ Developer Guide & About":
         3. **Adding Unit Tests**: Run `pytest -v` to ensure zero regression failures.
         """
     )
-    
+
     st.markdown("### ⚡ Local Services Commands")
     st.markdown(
         """

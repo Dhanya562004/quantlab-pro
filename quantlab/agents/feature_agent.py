@@ -22,7 +22,7 @@ class FeatureEngineeringAgent(BaseAgent):
 
     def run(self, state: WorkflowState) -> WorkflowState:
         start_t = time.time()
-        
+
         if state.feature_config is None or state.df_raw is None:
             duration = (time.time() - start_t) * 1000
             state.execution_trace.append(AgentStepTrace(
@@ -38,19 +38,19 @@ class FeatureEngineeringAgent(BaseAgent):
         try:
             X, y, feature_cols, df_aligned = build_features_and_target(state.df_raw, state.feature_config)
             splits = create_chronological_splits(X, y, df_aligned, state.feature_config)
-            
+
             state.splits = splits
             state.aligned_sample_count = len(df_aligned)
             state.feature_names = feature_cols
-            
+
             duration = (time.time() - start_t) * 1000
-            
+
             summary = (
                 f"Generated {len(feature_cols)} technical features on {len(df_aligned)} aligned bars. "
                 f"Train={len(splits.X_train)}, Val={len(splits.X_val)}, Test={len(splits.X_test)}. "
                 f"StandardScaler fit strictly on training set."
             )
-            
+
             state.execution_trace.append(AgentStepTrace(
                 step_index=len(state.execution_trace) + 1,
                 agent_name=self.agent_name,
@@ -79,5 +79,5 @@ class FeatureEngineeringAgent(BaseAgent):
                 duration_ms=round(duration, 2),
                 summary=f"Error constructing features: {e!s}",
             ))
-            
+
         return state

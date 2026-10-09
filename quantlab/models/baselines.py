@@ -12,7 +12,7 @@ class MajorityClassBaseline:
     def __init__(self):
         self.majority_class: int = 0
         self.class_probabilities: np.ndarray = np.array([0.5, 0.5])
-        
+
     def fit(self, X: np.ndarray, y: np.ndarray) -> "MajorityClassBaseline":
         classes, counts = np.unique(y, return_counts=True)
         if len(classes) == 0:
@@ -23,10 +23,10 @@ class MajorityClassBaseline:
             p1 = np.mean(y == 1)
             self.class_probabilities = np.array([1 - p1, p1])
         return self
-        
+
     def predict(self, X: np.ndarray) -> np.ndarray:
         return np.full(shape=(len(X),), fill_value=self.majority_class, dtype=int)
-        
+
     def predict_proba(self, X: np.ndarray) -> np.ndarray:
         return np.tile(self.class_probabilities, (len(X), 1))
 
@@ -39,7 +39,7 @@ class SklearnLogisticRegressionModel:
         self.seed = seed
         self.model = LogisticRegression(C=C, max_iter=max_iter, random_state=seed)
         self.is_fitted = False
-        
+
     def fit(self, X: np.ndarray, y: np.ndarray) -> "SklearnLogisticRegressionModel":
         if len(np.unique(y)) < 2:
             # Single class fallback
@@ -49,12 +49,12 @@ class SklearnLogisticRegressionModel:
             self.model.fit(X, y)
             self.is_fitted = True
         return self
-        
+
     def predict(self, X: np.ndarray) -> np.ndarray:
         if not self.is_fitted:
             return np.full(shape=(len(X),), fill_value=getattr(self, "majority_class", 0), dtype=int)
         return self.model.predict(X)
-        
+
     def predict_proba(self, X: np.ndarray) -> np.ndarray:
         if not self.is_fitted:
             p = 1.0 if getattr(self, "majority_class", 0) == 1 else 0.0

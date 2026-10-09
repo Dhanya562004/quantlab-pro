@@ -79,32 +79,32 @@ def tool_validate_dataset(args: ValidateDatasetArgs) -> ValidationReport:
 def tool_run_experiment(args: RunExperimentArgs) -> dict[str, Any]:
     # 1. Generate Data
     df, meta = generate_synthetic_ohlcv(symbol=args.symbol, n_bars=args.n_bars, seed=args.seed)
-    
+
     # 2. Validate Data
     val_report = validate_ohlcv_data(df)
     if not val_report.is_valid:
         return {"success": False, "error": f"Validation failed: {val_report.errors}"}
-        
+
     # 3. Features & Splits
     config = FeatureConfig(target_horizon=args.target_horizon)
     X, y, feat_cols, df_aligned = build_features_and_target(df, config)
     splits = create_chronological_splits(X, y, df_aligned, config)
-    
+
     # 4. Train Model
     artifact, model = train_model(args.model_type, splits, seed=args.seed)
-    
+
     # 5. Evaluate held-out Test split
     y_test_pred = model.predict(splits.X_test)
     test_metrics = compute_classification_metrics(splits.y_test, y_test_pred)
-    
+
     # 6. Backtest
     backtest_res = run_research_backtest(df_aligned, y_test_pred, splits.test_dates, transaction_cost_bps=args.transaction_cost_bps)
-    
+
     # 7. Persist to DB
     import uuid
     exp_id = f"EXP-{uuid.uuid4().hex[:8].upper()}"
     storage = ExperimentStorage()
-    
+
     manifest = {
         "experiment_id": exp_id,
         "symbol": args.symbol,
@@ -116,7 +116,7 @@ def tool_run_experiment(args: RunExperimentArgs) -> dict[str, Any]:
         "train_dates": [splits.train_dates[0], splits.train_dates[-1]],
         "test_dates": [splits.test_dates[0], splits.test_dates[-1]],
     }
-    
+
     metrics_summary = {
         "accuracy": test_metrics.accuracy,
         "precision": test_metrics.precision,
@@ -125,7 +125,7 @@ def tool_run_experiment(args: RunExperimentArgs) -> dict[str, Any]:
         "sharpe_ratio": backtest_res.sharpe_ratio,
         "max_drawdown": backtest_res.max_drawdown,
     }
-    
+
     storage.save_experiment(
         experiment_id=exp_id,
         symbol=args.symbol,
@@ -140,7 +140,7 @@ def tool_run_experiment(args: RunExperimentArgs) -> dict[str, Any]:
         manifest=manifest,
         metrics=metrics_summary,
     )
-    
+
     return {
         "success": True,
         "experiment_id": exp_id,

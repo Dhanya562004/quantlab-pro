@@ -52,7 +52,7 @@ def health_check():
         db_ok = True
     except Exception:
         db_ok = False
-        
+
     return HealthResponse(
         status="healthy" if db_ok else "degraded",
         service="QuantLab Pro API",
@@ -69,25 +69,25 @@ def predict(req: PredictRequest):
     """
     if not req.features:
         raise HTTPException(status_code=400, detail="Feature vector cannot be empty.")
-        
+
     x = np.array(req.features).reshape(1, -1)
-    
+
     # Check cache or run default lightweight model fit
     if "model" not in ACTIVE_MODEL_CACHE:
         # Run default experiment to populate active model
         res = tool_run_experiment(RunExperimentArgs(model_type=req.model_type, n_bars=200))
         ACTIVE_MODEL_CACHE["experiment_id"] = res.get("experiment_id")
-        
+
     # Logistic regression simulation for prediction endpoint
     # Dot product calculation for demonstration
     weights = np.ones(x.shape[1]) / np.sqrt(x.shape[1])
     score = float(np.dot(x, weights)[0])
     p1 = 1.0 / (1.0 + np.exp(-score))
     p0 = 1.0 - p1
-    
+
     pred_class = 1 if p1 >= 0.5 else 0
     confidence = float(max(p0, p1))
-    
+
     return PredictResponse(
         predicted_class=pred_class,
         probabilities=[round(p0, 4), round(p1, 4)],
@@ -113,7 +113,7 @@ def monitoring_distribution():
     """
     storage = ExperimentStorage()
     experiments = storage.list_experiments(limit=50)
-    
+
     if not experiments:
         return {
             "total_runs": 0,
@@ -121,10 +121,10 @@ def monitoring_distribution():
             "mean_sharpe": 0.0,
             "data_quality_status": "NO_EXPERIMENTS_RECORDED"
         }
-        
+
     accuracies = [e["accuracy"] for e in experiments]
     sharpes = [e["sharpe_ratio"] for e in experiments]
-    
+
     return {
         "total_runs": len(experiments),
         "mean_accuracy": round(float(np.mean(accuracies)), 4),

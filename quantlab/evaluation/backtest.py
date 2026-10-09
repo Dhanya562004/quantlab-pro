@@ -33,21 +33,21 @@ def run_research_backtest(
 ) -> BacktestResult:
     """
     Simulate a research-only backtest on held-out test data.
-    
+
     Args:
         df_aligned: Aligned DataFrame containing 'Date', 'Close', 'future_return'.
         predictions: Model binary predictions (1 = Long, 0 = Cash/Short).
         test_dates: List of ISO date strings for test split.
         transaction_cost_bps: Transaction cost per trade in basis points (10 bps = 0.0010).
         allow_short: If True, prediction 0 -> Short (-1); if False, prediction 0 -> Cash (0).
-        
+
     Returns:
         BacktestResult object.
     """
     # Filter test split records
     test_mask = df_aligned["Date"].isin(test_dates)
     df_test = df_aligned[test_mask].copy().reset_index(drop=True)
-    
+
     if len(df_test) == 0 or len(predictions) == 0:
         return BacktestResult(
             total_strategy_return=0.0,
@@ -62,53 +62,53 @@ def run_research_backtest(
             benchmark_curve=[1.0],
             dates=["N/A"],
         )
-        
+
     # Match predictions length with df_test length
     n_eval = min(len(df_test), len(predictions))
     df_test = df_test.iloc[:n_eval]
     preds = predictions[:n_eval]
-    
+
     # Asset daily returns
     asset_returns = df_test["future_return"].to_numpy()
     dates = df_test["Date"].tolist()
-    
+
     # Determine positions: 1 for Long; 0 or -1 for cash/short
     if allow_short:
         positions = np.where(preds == 1, 1.0, -1.0)
     else:
         positions = np.where(preds == 1, 1.0, 0.0)
-        
+
     # Detect position switches for transaction costs
     # Initial trade into first position
     prev_positions = np.roll(positions, 1)
     prev_positions[0] = 0.0
     position_changes = np.abs(positions - prev_positions)
     num_trades = int(np.sum(position_changes > 0))
-    
+
     cost_per_trade = transaction_cost_bps / 10000.0
     trade_costs = position_changes * cost_per_trade
-    
+
     # Strategy net return per bar
     strategy_returns = (positions * asset_returns) - trade_costs
-    
+
     # Cumulative return curves (starting at 1.0)
     strategy_cum = np.cumprod(1.0 + strategy_returns)
     benchmark_cum = np.cumprod(1.0 + asset_returns)
-    
+
     total_strat_ret = float(strategy_cum[-1] - 1.0) if len(strategy_cum) > 0 else 0.0
     total_bench_ret = float(benchmark_cum[-1] - 1.0) if len(benchmark_cum) > 0 else 0.0
-    
+
     # Risk Metrics Calculation
     mean_ret = np.mean(strategy_returns)
     std_ret = np.std(strategy_returns, ddof=1) if len(strategy_returns) > 1 else 0.0
-    
+
     if std_ret > 1e-8:
         sharpe = float((mean_ret / std_ret) * np.sqrt(252))
     else:
         sharpe = 0.0
     if np.isnan(sharpe):
         sharpe = 0.0
-        
+
     # Downside std for Sortino
     downside_returns = strategy_returns[strategy_returns < 0]
     downside_std = np.std(downside_returns, ddof=1) if len(downside_returns) > 1 else 0.0
@@ -118,21 +118,21 @@ def run_research_backtest(
         sortino = 0.0
     if np.isnan(sortino):
         sortino = 0.0
-        
+
     # Max Drawdown Calculation
     running_max = np.maximum.accumulate(strategy_cum)
     drawdowns = (strategy_cum - running_max) / running_max
     max_dd = float(np.min(drawdowns)) if len(drawdowns) > 0 else 0.0
     if np.isnan(max_dd):
         max_dd = 0.0
-    
+
     # Win Rate on Active Days
     active_mask = positions != 0
     if np.sum(active_mask) > 0:
         win_rate = float(np.mean(strategy_returns[active_mask] > 0))
     else:
         win_rate = 0.0
-        
+
     return BacktestResult(
         total_strategy_return=round(total_strat_ret, 4),
         total_benchmark_return=round(total_bench_ret, 4),

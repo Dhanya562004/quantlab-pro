@@ -20,7 +20,7 @@ class ExperimentAuditorAgent(BaseAgent):
 
     def run(self, state: WorkflowState) -> WorkflowState:
         start_t = time.time()
-        
+
         if state.test_metrics is None or state.splits is None:
             duration = (time.time() - start_t) * 1000
             state.execution_trace.append(AgentStepTrace(
@@ -36,12 +36,12 @@ class ExperimentAuditorAgent(BaseAgent):
         try:
             exp_id = f"EXP-{uuid.uuid4().hex[:8].upper()}"
             state.experiment_id = exp_id
-            
+
             splits = state.splits
             meta = state.raw_metadata
             metrics = state.test_metrics
             backtest = state.backtest_result
-            
+
             manifest = {
                 "experiment_id": exp_id,
                 "created_at": meta.get("created_at"),
@@ -78,9 +78,9 @@ class ExperimentAuditorAgent(BaseAgent):
                 },
                 "risk_warnings": state.risk_warnings,
             }
-            
+
             state.manifest = manifest
-            
+
             # Save to SQLite database
             storage = ExperimentStorage()
             storage.save_experiment(
@@ -97,14 +97,14 @@ class ExperimentAuditorAgent(BaseAgent):
                 manifest=manifest,
                 metrics=manifest["results"],
             )
-            
+
             state.is_persisted = True
             state.is_completed = True
-            
+
             duration = (time.time() - start_t) * 1000
-            
+
             summary = f"Compiled manifest and persisted run '{exp_id}' to SQLite database successfully."
-            
+
             state.execution_trace.append(AgentStepTrace(
                 step_index=len(state.execution_trace) + 1,
                 agent_name=self.agent_name,
@@ -129,5 +129,5 @@ class ExperimentAuditorAgent(BaseAgent):
                 duration_ms=round(duration, 2),
                 summary=f"Auditor error: {e!s}",
             ))
-            
+
         return state

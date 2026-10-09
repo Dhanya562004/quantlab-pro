@@ -19,7 +19,7 @@ class ModelTrainingAgent(BaseAgent):
 
     def run(self, state: WorkflowState) -> WorkflowState:
         start_t = time.time()
-        
+
         if state.splits is None:
             duration = (time.time() - start_t) * 1000
             state.execution_trace.append(AgentStepTrace(
@@ -38,17 +38,17 @@ class ModelTrainingAgent(BaseAgent):
                 splits=state.splits,
                 seed=state.user_seed,
             )
-            
+
             state.trained_artifact = artifact
             state.trained_model_object = model_obj
-            
+
             duration = (time.time() - start_t) * 1000
-            
+
             summary = (
                 f"Successfully trained '{state.selected_model_type}' model in {artifact.training_duration_sec}s. "
                 f"Train Accuracy={artifact.train_accuracy * 100:.1f}%, Val Accuracy={artifact.val_accuracy * 100:.1f}%."
             )
-            
+
             state.execution_trace.append(AgentStepTrace(
                 step_index=len(state.execution_trace) + 1,
                 agent_name=self.agent_name,
@@ -76,5 +76,5 @@ class ModelTrainingAgent(BaseAgent):
                 duration_ms=round(duration, 2),
                 summary=f"Model training error: {e!s}",
             ))
-            
+
         return state

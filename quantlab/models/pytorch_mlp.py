@@ -23,7 +23,7 @@ class MLPNetwork(nn.Module):
             nn.Dropout(dropout_rate),
             nn.Linear(hidden_dim // 2, 2)
         )
-        
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.net(x)
 
@@ -55,7 +55,7 @@ class PyTorchMLPClassifier:
 
     def fit(self, X: np.ndarray, y: np.ndarray, X_val: np.ndarray | None = None, y_val: np.ndarray | None = None) -> "PyTorchMLPClassifier":
         self._set_seed()
-        
+
         n_samples, input_dim = X.shape
         if len(np.unique(y)) < 2:
             self.is_fitted = False
@@ -79,7 +79,7 @@ class PyTorchMLPClassifier:
             epoch_loss = 0.0
             correct = 0
             total = 0
-            
+
             for batch_x, batch_y in loader:
                 optimizer.zero_grad()
                 outputs = self.model(batch_x)
@@ -94,14 +94,14 @@ class PyTorchMLPClassifier:
 
             train_loss = epoch_loss / max(1, total)
             train_acc = correct / max(1, total)
-            
+
             history_entry = {"epoch": epoch + 1, "train_loss": train_loss, "train_acc": train_acc}
-            
+
             if X_val is not None and y_val is not None and len(X_val) > 1:
                 val_loss, val_acc = self._evaluate_loss_acc(X_val, y_val, criterion)
                 history_entry["val_loss"] = val_loss
                 history_entry["val_acc"] = val_acc
-                
+
             self.training_history.append(history_entry)
 
         self.is_fitted = True

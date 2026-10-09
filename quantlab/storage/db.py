@@ -134,7 +134,7 @@ class ExperimentStorage:
             row = cursor.fetchone()
             if not row:
                 return None
-            
+
             d = dict(row)
             return ExperimentRecord(
                 experiment_id=d["experiment_id"],

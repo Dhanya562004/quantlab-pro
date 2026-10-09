@@ -15,10 +15,10 @@ def run_local_mcp_client_test() -> dict[str, Any]:
     """
     registry = ToolRegistry()
     tools = registry.list_tools()
-    
+
     # Test invocation of 'dataset_summary'
     res_summary = registry.execute("dataset_summary", {"symbol": "MCP_TEST", "n_bars": 150, "seed": 99})
-    
+
     # Test invocation of 'run_experiment'
     res_exp = registry.execute("run_experiment", {
         "symbol": "MCP_TEST",
@@ -26,7 +26,7 @@ def run_local_mcp_client_test() -> dict[str, Any]:
         "seed": 99,
         "model_type": "logistic_regression",
     })
-    
+
     return {
         "mcp_server_name": "QuantLab-Pro-MCP-Server",
         "tools_discovered_count": len(tools),

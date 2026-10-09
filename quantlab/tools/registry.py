@@ -108,16 +108,16 @@ class ToolRegistry:
     def execute(self, tool_name: str, raw_args: dict[str, Any]) -> ToolResult:
         """
         Validate input arguments against schema and safely invoke allowlisted tool.
-        
+
         Args:
             tool_name: Registered tool identifier.
             raw_args: Dict of input argument values.
-            
+
         Returns:
             ToolResult object.
         """
         start_t = time.time()
-        
+
         if tool_name not in self._tools:
             duration_ms = round((time.time() - start_t) * 1000, 2)
             err_msg = f"Rejection: Tool '{tool_name}' is not in the allowlisted tool registry."
@@ -131,7 +131,7 @@ class ToolRegistry:
             return ToolResult(success=False, error=err_msg, execution_time_ms=duration_ms)
 
         tool = self._tools[tool_name]
-        
+
         # Pydantic validation
         try:
             validated_pydantic_args = tool.args_schema(**raw_args)
@@ -153,7 +153,7 @@ class ToolRegistry:
             if isinstance(res_data, BaseModel):
                 res_data = res_data.model_dump()
             duration_ms = round((time.time() - start_t) * 1000, 2)
-            
+
             self.execution_logs.append(ToolExecutionLog(
                 tool_name=tool_name,
                 validated_args=validated_pydantic_args.model_dump(),
