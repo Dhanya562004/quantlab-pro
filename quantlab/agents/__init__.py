@@ -8,12 +8,23 @@ from quantlab.agents.planner_agent import QuantResearchPlannerAgent
 from quantlab.agents.quality_agent import DataQualityAgent
 from quantlab.agents.training_agent import ModelTrainingAgent
 
+# Class Aliases for exact naming alignment
+PlannerAgent = QuantResearchPlannerAgent
+TrainingAgent = ModelTrainingAgent
+EvaluationAgent = EvaluationRiskAgent
+AuditorAgent = ExperimentAuditorAgent
+
 __all__ = [
     "BaseAgent",
     "DataQualityAgent",
-    "EvaluationRiskAgent",
-    "ExperimentAuditorAgent",
+    "QuantResearchPlannerAgent",
+    "PlannerAgent",
     "FeatureEngineeringAgent",
     "ModelTrainingAgent",
-    "QuantResearchPlannerAgent",
+    "TrainingAgent",
+    "EvaluationRiskAgent",
+    "EvaluationAgent",
+    "ExperimentAuditorAgent",
+    "AuditorAgent",
 ]
+

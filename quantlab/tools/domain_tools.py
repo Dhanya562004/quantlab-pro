@@ -164,3 +164,60 @@ def tool_get_experiment_manifest(args: GetExperimentArgs) -> dict[str, Any]:
     if not rec:
         return {"success": False, "error": f"Experiment '{args.experiment_id}' not found."}
     return {"success": True, "experiment_id": rec.experiment_id, "manifest": rec.manifest_json}
+
+
+def tool_inspect_dataset(args: DatasetSummaryArgs) -> DatasetSummaryResult:
+    """Alias for dataset_summary tool."""
+    return tool_dataset_summary(args)
+
+
+def tool_get_experiment(args: GetExperimentArgs) -> dict[str, Any]:
+    """Retrieve full experiment details and manifest."""
+    storage = ExperimentStorage()
+    rec = storage.get_experiment(args.experiment_id)
+    if not rec:
+        return {"success": False, "error": f"Experiment '{args.experiment_id}' not found."}
+    return {
+        "success": True,
+        "experiment_id": rec.experiment_id,
+        "symbol": rec.symbol,
+        "model_type": rec.model_type,
+        "created_at": rec.created_at,
+        "fingerprint": rec.fingerprint,
+        "metrics": rec.metrics_json,
+        "manifest": rec.manifest_json,
+    }
+
+
+def tool_get_model_metrics(args: GetExperimentArgs) -> dict[str, Any]:
+    """Retrieve classification evaluation metrics for experiment."""
+    storage = ExperimentStorage()
+    rec = storage.get_experiment(args.experiment_id)
+    if not rec:
+        return {"success": False, "error": f"Experiment '{args.experiment_id}' not found."}
+    m = rec.metrics_json
+    return {
+        "success": True,
+        "experiment_id": rec.experiment_id,
+        "model_type": rec.model_type,
+        "accuracy": m.get("accuracy", 0.0),
+        "precision": m.get("precision", 0.0),
+        "recall": m.get("recall", 0.0),
+        "f1_score": m.get("f1_score", 0.0),
+    }
+
+
+def tool_get_backtest_summary(args: GetExperimentArgs) -> dict[str, Any]:
+    """Retrieve backtest performance summary for experiment."""
+    storage = ExperimentStorage()
+    rec = storage.get_experiment(args.experiment_id)
+    if not rec:
+        return {"success": False, "error": f"Experiment '{args.experiment_id}' not found."}
+    m = rec.metrics_json
+    return {
+        "success": True,
+        "experiment_id": rec.experiment_id,
+        "sharpe_ratio": m.get("sharpe_ratio", 0.0),
+        "max_drawdown": m.get("max_drawdown", 0.0),
+    }
+

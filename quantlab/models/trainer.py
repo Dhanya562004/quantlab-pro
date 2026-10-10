@@ -112,3 +112,83 @@ def train_model(
     )
 
     return artifact, model
+
+
+def save_model_artifact(
+    experiment_id: str,
+    artifact: TrainedModelArtifact,
+    splits: DatasetSplits,
+    output_dir: str = "artifacts/models"
+) -> str:
+    """
+    Save model weights, hyperparameters, feature names, and scaler parameters linked to experiment_id.
+    """
+    import json
+    from pathlib import Path
+
+    import torch
+
+    dir_path = Path(output_dir)
+    dir_path.mkdir(parents=True, exist_ok=True)
+
+    meta = {
+        "experiment_id": experiment_id,
+        "model_type": artifact.model_type,
+        "seed": artifact.seed,
+        "hyperparameters": artifact.hyperparameters,
+        "feature_names": splits.feature_names,
+        "scaler_mean": splits.scaler_mean,
+        "scaler_scale": splits.scaler_scale,
+        "train_accuracy": artifact.train_accuracy,
+        "val_accuracy": artifact.val_accuracy,
+    }
+
+    meta_file = dir_path / f"{experiment_id}_meta.json"
+    with open(meta_file, "w", encoding="utf-8") as f:
+        json.dump(meta, f, indent=2)
+
+    if artifact.model_type == "pytorch_mlp" and hasattr(artifact.model_object, "model") and artifact.model_object.model is not None:
+        weights_file = dir_path / f"{experiment_id}.pt"
+        torch.save(artifact.model_object.model.state_dict(), weights_file)
+        meta["weights_path"] = str(weights_file)
+
+    return str(meta_file)
+
+
+def load_model_artifact(
+    experiment_id: str,
+    model_dir: str = "artifacts/models"
+) -> dict[str, Any]:
+    """
+    Safely load experiment model artifact metadata and weights linked to experiment_id.
+    """
+    import json
+    from pathlib import Path
+
+    import torch
+
+    from quantlab.models.pytorch_mlp import MLPNetwork, PyTorchMLPClassifier
+
+    dir_path = Path(model_dir)
+    meta_file = dir_path / f"{experiment_id}_meta.json"
+
+    if not meta_file.exists():
+        raise FileNotFoundError(f"No artifact found for experiment '{experiment_id}' at {meta_file}")
+
+    with open(meta_file, "r", encoding="utf-8") as f:
+        meta = json.load(f)
+
+    weights_file = dir_path / f"{experiment_id}.pt"
+    if meta.get("model_type") == "pytorch_mlp" and weights_file.exists():
+        input_dim = len(meta.get("feature_names", []))
+        hidden_dim = meta.get("hyperparameters", {}).get("hidden_dim", 32)
+        net = MLPNetwork(input_dim=input_dim, hidden_dim=hidden_dim)
+        net.load_state_dict(torch.load(weights_file, weights_only=True))
+        net.eval()
+        model_wrapper = PyTorchMLPClassifier(hidden_dim=hidden_dim, seed=meta.get("seed", 42))
+        model_wrapper.model = net
+        model_wrapper.is_fitted = True
+        meta["reconstructed_model"] = model_wrapper
+
+    return meta
+

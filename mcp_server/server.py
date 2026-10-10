@@ -27,7 +27,11 @@ from quantlab.tools.domain_tools import (
     RunExperimentArgs,
     ValidateDatasetArgs,
     tool_dataset_summary,
+    tool_get_backtest_summary,
+    tool_get_experiment,
     tool_get_experiment_metrics,
+    tool_get_model_metrics,
+    tool_inspect_dataset,
     tool_run_experiment,
     tool_validate_dataset,
 )
@@ -85,12 +89,50 @@ def run_experiment(
 
 
 @mcp_server.tool(
+    name="inspect_dataset",
+    description="Inspect statistical dataset summary and provenance fingerprint (alias for dataset_summary)."
+)
+def inspect_dataset(symbol: str = "SYNTH_BTC", n_bars: int = 300, seed: int = 42) -> dict[str, Any]:
+    args = DatasetSummaryArgs(symbol=symbol, n_bars=n_bars, seed=seed)
+    res = tool_inspect_dataset(args)
+    return res.model_dump()
+
+
+@mcp_server.tool(
     name="get_experiment_metrics",
     description="Fetch recorded performance metrics for a specific experiment ID."
 )
 def get_experiment_metrics(experiment_id: str) -> dict[str, Any]:
     args = GetExperimentArgs(experiment_id=experiment_id)
     return tool_get_experiment_metrics(args)
+
+
+@mcp_server.tool(
+    name="get_experiment",
+    description="Fetch full experiment details and manifest by experiment ID."
+)
+def get_experiment(experiment_id: str) -> dict[str, Any]:
+    args = GetExperimentArgs(experiment_id=experiment_id)
+    return tool_get_experiment(args)
+
+
+@mcp_server.tool(
+    name="get_model_metrics",
+    description="Fetch model classification accuracy, precision, recall, and F1 score."
+)
+def get_model_metrics(experiment_id: str) -> dict[str, Any]:
+    args = GetExperimentArgs(experiment_id=experiment_id)
+    return tool_get_model_metrics(args)
+
+
+@mcp_server.tool(
+    name="get_backtest_summary",
+    description="Fetch backtest Sharpe ratio and maximum drawdown for an experiment."
+)
+def get_backtest_summary(experiment_id: str) -> dict[str, Any]:
+    args = GetExperimentArgs(experiment_id=experiment_id)
+    return tool_get_backtest_summary(args)
+
 
 
 def main():

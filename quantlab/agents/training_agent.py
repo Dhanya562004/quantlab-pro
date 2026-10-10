@@ -78,3 +78,6 @@ class ModelTrainingAgent(BaseAgent):
             ))
 
         return state
+
+
+TrainingAgent = ModelTrainingAgent

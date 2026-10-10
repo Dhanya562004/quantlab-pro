@@ -131,3 +131,6 @@ class ExperimentAuditorAgent(BaseAgent):
             ))
 
         return state
+
+
+AuditorAgent = ExperimentAuditorAgent

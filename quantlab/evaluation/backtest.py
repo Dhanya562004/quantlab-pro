@@ -44,11 +44,7 @@ def run_research_backtest(
     Returns:
         BacktestResult object.
     """
-    # Filter test split records
-    test_mask = df_aligned["Date"].isin(test_dates)
-    df_test = df_aligned[test_mask].copy().reset_index(drop=True)
-
-    if len(df_test) == 0 or len(predictions) == 0:
+    if df_aligned is None or df_aligned.empty or "Date" not in df_aligned.columns or len(test_dates) == 0 or len(predictions) == 0:
         return BacktestResult(
             total_strategy_return=0.0,
             total_benchmark_return=0.0,
@@ -63,14 +59,35 @@ def run_research_backtest(
             dates=["N/A"],
         )
 
+    # Filter test split records
+    test_mask = df_aligned["Date"].isin(test_dates)
+    df_test = df_aligned[test_mask].copy().reset_index(drop=True)
+
+    if len(df_test) == 0:
+        return BacktestResult(
+            total_strategy_return=0.0,
+            total_benchmark_return=0.0,
+            sharpe_ratio=0.0,
+            sortino_ratio=0.0,
+            max_drawdown=0.0,
+            win_rate=0.0,
+            num_trades=0,
+            transaction_cost_bps=transaction_cost_bps,
+            strategy_curve=[1.0],
+            benchmark_curve=[1.0],
+            dates=["N/A"],
+        )
+
+
     # Match predictions length with df_test length
     n_eval = min(len(df_test), len(predictions))
     df_test = df_test.iloc[:n_eval]
     preds = predictions[:n_eval]
 
-    # Asset daily returns
-    asset_returns = df_test["future_return"].to_numpy()
+    # Asset daily returns (safely handled against NaN)
+    asset_returns = np.nan_to_num(df_test["future_return"].to_numpy(), nan=0.0)
     dates = df_test["Date"].tolist()
+
 
     # Determine positions: 1 for Long; 0 or -1 for cash/short
     if allow_short:

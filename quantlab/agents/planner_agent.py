@@ -84,3 +84,6 @@ class QuantResearchPlannerAgent(BaseAgent):
         ))
 
         return state
+
+
+PlannerAgent = QuantResearchPlannerAgent

@@ -39,26 +39,45 @@ class HealthResponse(BaseModel):
     database_connected: bool
 
 
+class ReadinessResponse(BaseModel):
+    status: str
+    database: str
+    storage_accessible: bool
+
+
+
 # Simulated active model cache for inference endpoint
 ACTIVE_MODEL_CACHE: dict[str, Any] = {}
 
 
 @app.get("/health", response_model=HealthResponse)
 def health_check():
-    """Service health and database connectivity check."""
+    """Service health status check."""
+    return HealthResponse(
+        status="healthy",
+        service="QuantLab Pro API",
+        version="1.0.0",
+        database_connected=True,
+    )
+
+
+@app.get("/ready", response_model=ReadinessResponse)
+def readiness_check():
+    """Service readiness check verifying required SQLite database access."""
     try:
         storage = ExperimentStorage()
         storage.list_experiments(limit=1)
-        db_ok = True
-    except Exception:
-        db_ok = False
+        return ReadinessResponse(
+            status="ready",
+            database="connected",
+            storage_accessible=True,
+        )
+    except Exception as ex:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Service not ready: SQLite database connection error: {ex!s}"
+        )
 
-    return HealthResponse(
-        status="healthy" if db_ok else "degraded",
-        service="QuantLab Pro API",
-        version="1.0.0",
-        database_connected=db_ok,
-    )
 
 
 @app.post("/predict", response_model=PredictResponse)

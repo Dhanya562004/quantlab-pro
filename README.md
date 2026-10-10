@@ -19,162 +19,175 @@
 
 ---
 
+## 🤖 Agentic Development Workflow
+
+*Verifiable evidence recorded during repository development and testing.*
+
+- **Engineering Task:** Upgraded existing QuantLab Pro repository into a fully tested, documented, reproducible quantitative ML research platform aligned with Tower Research Capital's internship requirements.
+- **AI Coding Assistant Used:** `Antigravity AI Assistant (Gemini 3.6 Flash)`
+- **Files Modified/Created:** [`quantlab/agents/`](file:///quantlab/agents/), [`mcp_server/`](file:///mcp_server/), [`quantlab/features/builder.py`](file:///quantlab/features/builder.py), [`quantlab/evaluation/backtest.py`](file:///quantlab/evaluation/backtest.py), [`quantlab/models/trainer.py`](file:///quantlab/models/trainer.py), [`api/main.py`](file:///api/main.py), [`tests/`](file:///tests/), [`docs/dev_log.md`](file:///docs/dev_log.md), [`docs/resume_evidence.md`](file:///docs/resume_evidence.md).
+- **Checks Executed:** `pytest -v` (39 tests passed), `ruff check .` (0 errors), `python -m mcp_server.client` (stdio integration verified).
+- **Observed Outcome:** 100% test suite pass rate, zero lint violations, real MCP SDK stdio integration, reproducible 3-model benchmark evaluations, and persisted model artifacts.
+- **Detailed Log File:** See [`docs/dev_log.md`](file:///docs/dev_log.md) for step-by-step logs and reusable assistant prompts.
+
+---
+
 ## 🏛️ System Architecture Topology
 
 QuantLab Pro coordinates a deterministic multi-agent pipeline passing typed Pydantic state across 6 specialized research agents:
 
 ```mermaid
 graph TD
-    subgraph Provenance & Validation Layer
-        A1[Deterministic Synthetic Generator] --> B[1. Data Quality Agent]
-        A2[CSV Upload Validator] --> B
-        A3[yfinance Market Data] --> B
+    subgraph Data Provenance & Ingestion
+        DS1[Synthetic OHLCV Generator] --> DQA[DataQualityAgent]
+        DS2[Uploaded CSV Dataset] --> DQA
+        DS3[yfinance Market Data] --> DQA
     end
 
-    subgraph Multi-Agent Orchestration Engine
-        B -- Validation Report --> C[2. Quant Research Planner Agent]
-        C -- Research Plan --> D[3. Feature Engineering Agent]
-        D -- Chronological Splits --> E[4. Model Training Agent]
-        E -- Trained Model --> F[5. Evaluation & Risk Agent]
-        F -- Metrics & Backtest --> G[6. Experiment Auditor Agent]
+    subgraph Six-Agent Orchestration Workflow
+        DQA -- Validation Report --> PA[PlannerAgent]
+        PA -- Feature Config & Model Choice --> FEA[FeatureEngineeringAgent]
+        FEA -- Leakage-Free Chronological Splits --> TA[TrainingAgent]
+        TA -- Trained Model Artifact --> EA[EvaluationAgent]
+        EA -- Held-Out Metrics & Backtest --> AA[AuditorAgent]
+    end
+
+    subgraph Evaluation & Backtesting
+        TA --> M1[Majority Class Baseline]
+        TA --> M2[Scikit-Learn Logistic Regression]
+        TA --> M3[PyTorch MLP Neural Network]
+        M1 & M2 & M3 --> EA
+        EA --> BT[Research Backtester Engine]
     end
 
     subgraph MLOps & Persistence Layer
-        G --> H[(SQLite Database)]
-        G --> I[JSON Manifest Exporter]
-        H --> J[Streamlit Dashboard Terminal]
-        H --> K[FastAPI REST Service]
-        H --> L[MCP Stdio Server]
+        AA --> DB[(SQLite Database quantlab_experiments.db)]
+        AA --> MF[JSON Reproducibility Manifests]
+        AA --> ART[PyTorch Model Artifacts .pt]
+    end
+
+    subgraph Access & Interfaces
+        DB & MF --> UI[Streamlit Terminal UI app.py]
+        DB & MF --> API[FastAPI REST API /health, /ready, /predict]
+        DB & MF --> MCP[MCP Stdio Server mcp_server/server.py]
     end
 ```
 
 ---
 
-## 🔑 Core Competencies & Feature Matrix
+## 🤖 Full Six-Agent Orchestration
 
-| Competency | Implementation Details | Module Location |
-| :--- | :--- | :--- |
-| **Multi-Agent Orchestration** | 6 specialized typed agents (`DataQuality`, `Planner`, `Feature`, `Training`, `Evaluation`, `Auditor`) with sequential state transitions and step tracing. | [`quantlab/agents/`](file:///quantlab/agents/) & [`quantlab/orchestration/`](file:///quantlab/orchestration/) |
-| **Leakage-Resistant ML** | Target shifted by $-h$, lagged technical indicators (RSI, MACD, Volatility ratios), chronological train/val/test splits, and scaler fit strictly on training data. | [`quantlab/features/builder.py`](file:///quantlab/features/builder.py) |
-| **Statistical & Neural ML** | Majority Class baseline, scikit-learn Logistic Regression, and PyTorch MLP classifier with fixed random seed reproducibility. | [`quantlab/models/`](file:///quantlab/models/) |
-| **Research Backtester** | Long/cash strategy simulation with transaction cost penalties (bps), Sharpe ratio, Sortino ratio, max drawdown, and equity curves. | [`quantlab/evaluation/backtest.py`](file:///quantlab/evaluation/backtest.py) |
-| **Official MCP Integration** | Native MCP server exposing allowlisted tools over stdio transport using official Python `mcp` SDK. | [`mcp_server/server.py`](file:///mcp_server/server.py) |
-| **MLOps & REST API** | SQLite experiment database, SHA-256 dataset fingerprinting, JSON reproducibility manifests, and FastAPI endpoints. | [`quantlab/storage/db.py`](file:///quantlab/storage/db.py) & [`api/main.py`](file:///api/main.py) |
-| **Agentic Coding Workflows** | Complete developer guide detailing Claude Code, Cursor, and Codex refactoring and debugging prompt workflows. | [`AGENTIC_WORKFLOW_GUIDE.md`](file:///AGENTIC_WORKFLOW_GUIDE.md) |
+The pipeline executes strictly in this sequence:
 
----
-
-## 🛡️ Data Provenance & Quantitative Validation Audit
-
-QuantLab Pro enforces strict data quality and mathematical integrity before any model training:
-
-- **Data Provenance Modes**:
-  1. `Synthetic`: Deterministic random-walk OHLCV generator with seed control.
-  2. `CSV Upload`: File parser with column standardization.
-  3. `yfinance`: Optional live historical market data downloader.
-- **Cryptographic Fingerprinting**: Calculates a SHA-256 checksum over raw dataset records.
-- **Quantitative Audit Checks (`validate_ohlcv_data`)**:
-  - Schema & Column Completeness (`Date`, `Open`, `High`, `Low`, `Close`, `Volume`).
-  - Strict Ascending Date Monotonicity & Duplicate Timestamp Detection.
-  - Price Validity ($Open, High, Low, Close > 0$) & Boundary Integrity ($High \ge \max(Open, Close)$ and $Low \le \min(Open, Close)$).
-  - Single-period return jump outlier detection ($> 5 \sigma$).
-  - Minimum sample size adequacy ($N \ge 100$).
+1. **`DataQualityAgent`**: Validates schema, pricing boundaries ($High \ge \max(Open, Close)$), date monotonicity, and sample adequacy ($N \ge 100$).
+2. **`PlannerAgent`**: Selects model architecture from allowlisted registry and formulates research plan with forecast horizon $h$.
+3. **`FeatureEngineeringAgent`**: Computes 14 technical features (lags, rolling vol, RSI, MACD), shifts target for future outcome, and fits `StandardScaler` **strictly on training split**.
+4. **`TrainingAgent`**: Trains baseline or PyTorch MLP model with fixed random seeds for reproducibility.
+5. **`EvaluationAgent`**: Evaluates held-out test split, runs research backtest with transaction costs, and flags suspicious accuracy ($>90\%$) or class imbalance.
+6. **`AuditorAgent`**: Calculates SHA-256 dataset fingerprint, compiles JSON manifest (`EXP-...`), serializes PyTorch artifacts, and persists run to SQLite database.
 
 ---
 
-## 🤖 The 6 Specialized Quantitative Research Agents
+## 📊 Reproducible ML Model Comparison
 
-```
- ┌───────────────────────────┐      ┌───────────────────────────┐      ┌───────────────────────────┐
- │ 1. Data Quality Agent     │ ───► │ 2. Research Planner Agent │ ───► │ 3. Feature Agent          │
- │ Schema & Price Auditing   │      │ Model & Horizon Selection │      │ Features & Scaled Splits  │
- └───────────────────────────┘      └───────────────────────────┘      └───────────────────────────┘
-               │                                                                     │
-               ▼                                                                     ▼
- ┌───────────────────────────┐      ┌───────────────────────────┐      ┌───────────────────────────┐
- │ 6. Auditor Agent          │ ◄─── │ 5. Evaluation & Risk Agent│ ◄─── │ 4. Model Training Agent   │
- │ Manifest & SQLite Store   │      │ Held-Out Test & Backtest  │      │ PyTorch MLP & Baselines   │
- └───────────────────────────┘      └───────────────────────────┘      └───────────────────────────┘
-```
+Evaluated on `SYNTH_BTC` dataset (500 bars, seed 42) with chronological 60/20/20 split (Train: 287 bars, Val: 96 bars, Test: 96 bars). Target is 1-bar forward return sign ($h=1$).
 
-1. **`DataQualityAgent`**: Validates raw dataset schema, pricing boundaries, and date monotonicity.
-2. **`QuantResearchPlannerAgent`**: Selects model architecture from an allowlisted registry and formulates research plan.
-3. **`FeatureEngineeringAgent`**: Computes leakage-safe technical indicators and chronological train/val/test splits.
-4. **`ModelTrainingAgent`**: Fits baseline or PyTorch MLP model with fixed random seeds.
-5. **`EvaluationRiskAgent`**: Evaluates held-out test split, runs research backtest with transaction costs, and audits leakage flags.
-6. **`ExperimentAuditorAgent`**: Compiles JSON manifest and saves experiment run to SQLite database (`ExperimentStorage`).
+| Model | Split | Accuracy | Precision | Recall | F1 Score | Confusion Matrix | Backtest Sharpe | Max Drawdown |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Majority Baseline** | Held-out test split | `46.88%` | `0.2344` | `0.5000` | `0.3191` | `[[0, 51], [0, 45]]` | `0.0000` | `0.00%` |
+| **Logistic Regression** | Held-out test split | `43.75%` | `0.4416` | `0.4471` | `0.4286` | `[[15, 36], [18, 27]]` | `-1.5709` | `-14.03%` |
+| **PyTorch MLP** | Held-out test split | `47.92%` | `0.4684` | `0.4706` | `0.4643` | `[[31, 20], [30, 15]]` | `-2.3295` | `-13.68%` |
+
+### Confusion Matrix & Model Findings
+- **Majority Baseline:** Predicts all samples as class 1 (Up), yielding 46.88% accuracy (reflecting the exact class ratio). Zero trades executed in backtest.
+- **Logistic Regression:** Achieves 43.75% test accuracy with 21 position transitions.
+- **PyTorch MLP:** Achieves top test accuracy of **47.92%** and F1 score of **0.4643**, demonstrating improved class balance handling (`[[31, 20], [30, 15]]`).
+
+### Leakage Prevention Rules
+1. Features at time $t$ use OHLCV data up to time $t$ ONLY.
+2. Target shifted by $-h$ so it represents return from $t$ to $t+h$.
+3. `StandardScaler` is fit **only on training split** and transforms val/test splits.
+4. Held-out test set remains completely untouched during model selection.
 
 ---
 
-## 🔌 Model Context Protocol (MCP) & Safe Tool Calling
+## 📈 Quantitative Backtesting Engine
 
-QuantLab Pro implements an allowlisted tool registry (`ToolRegistry`) with Pydantic argument schemas:
+The backtesting engine simulates long/cash trading strategy performance under explicit assumptions:
+- **Timing:** Signals computed using close at $t$. Position entered at $t+1$.
+- **Transaction Costs:** Applied in basis points (10 bps default) to position changes (turnover).
+- **Risk Metrics:** Annualized Sharpe ratio, Sortino ratio, Peak-to-Trough Maximum Drawdown, Win Rate, and Buy & Hold benchmark return.
 
-- `dataset_summary`: Generates summary statistics and SHA-256 fingerprint.
-- `validate_dataset`: Executes quantitative data quality audit.
-- `run_experiment`: Runs end-to-end training and backtest pipeline.
-- `get_experiment_metrics`: Fetches metrics from SQLite database.
-- `get_experiment_manifest`: Retrieves JSON manifest from SQLite.
+---
 
-### Running MCP Tools & Local Client
+## 🔌 Model Context Protocol (MCP) Integration
+
+QuantLab Pro implements a native MCP server built with the official Python `mcp` SDK exposing allowlisted tools over stdio transport:
+
+### Allowlisted Tools
+- `inspect_dataset` / `dataset_summary`: Returns shape, date range, columns, and SHA-256 fingerprint.
+- `validate_dataset`: Executes data quality validation audit.
+- `run_experiment`: Executes end-to-end multi-agent ML training and backtest.
+- `get_experiment`: Retrieves full experiment details and manifest.
+- `get_experiment_metrics`: Fetches test accuracy, precision, recall, and F1.
+- `get_model_metrics`: Fetches model classification metrics.
+- `get_backtest_summary`: Fetches Sharpe ratio and max drawdown.
+
+### Running MCP Server & Integration Client
 ```bash
-# Run Local MCP Integration Client Verification
-python -m mcp_server.client
-
-# Launch MCP Stdio Server
+# Launch Stdio Server
 python -m mcp_server.server
+
+# Run Genuine SDK Integration Test Client
+python -m mcp_server.client
 ```
 
 ---
 
 ## 🌐 FastAPI REST Inference & Monitoring Service
 
-Run local inference REST API:
+Launch local inference REST API:
 ```bash
 uvicorn api.main:app --reload --port 8000
 ```
 
 | Endpoint | Method | Description |
 | :--- | :--- | :--- |
-| `/health` | `GET` | Service status & database connectivity check |
+| `/health` | `GET` | Service status check |
+| `/ready` | `GET` | Dependency & SQLite database readiness check |
 | `/predict` | `POST` | Real-time feature vector inference -> prediction & confidence |
 | `/metrics/{experiment_id}` | `GET` | Fetch recorded metrics by experiment ID |
-| `/monitoring/distribution` | `GET` | Historical accuracy/Sharpe distribution & monitoring stats |
+| `/monitoring/distribution` | `GET` | Operational metrics & historical performance distribution |
 
 ---
 
-## ⚡ Quick Start & Setup Guide
+## ⚡ Quick Start & Verification
 
-### 1. Clone & Install Dependencies
+### 1. Install Dependencies
 ```bash
-git clone https://github.com/Dhanya562004/quantlab-pro.git
-cd quantlab-pro
 pip install -r requirements.txt
 ```
 
-### 2. Launch Streamlit Dark Purple Dashboard Terminal
-```bash
-streamlit run app.py
-```
-> Access local dashboard in browser: `http://localhost:8501`
-
-### 3. Run PyTest Test Suite (100% Passing)
+### 2. Run Test Suite (39 Tests Passed)
 ```bash
 pytest -v
 ```
 
-### 4. Run Ruff Linter
+### 3. Run Ruff Linter
 ```bash
 ruff check .
 ```
 
+### 4. Launch Streamlit UI Terminal
+```bash
+streamlit run app.py
+```
+
 ---
 
-## 🚀 Live Streamlit Deployment
+## 📑 Resume Evidence
 
-- **Live URL**: [https://quantlab-pro-2dbdnpq8kgkvndauqsicc9.streamlit.app/](https://quantlab-pro-2dbdnpq8kgkvndauqsicc9.streamlit.app/)
-- **Repository**: [https://github.com/Dhanya562004/quantlab-pro.git](https://github.com/Dhanya562004/quantlab-pro.git)
-- **Main Entry Point**: `app.py`
+See [`docs/resume_evidence.md`](file:///docs/resume_evidence.md) for verified resume bullets, summary sentences, and metric breakdowns.
 
 ---
 

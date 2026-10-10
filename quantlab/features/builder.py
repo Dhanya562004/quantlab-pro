@@ -145,8 +145,9 @@ def build_features_and_target(
     df_feat["future_return"] = future_return
 
     # Drop NaNs resulting from rolling windows and target shifting
-    valid_mask = df_feat[feature_cols + ["target"]].notna().all(axis=1)
+    valid_mask = df_feat[feature_cols + ["target", "future_return"]].notna().all(axis=1)
     df_aligned = df_feat[valid_mask].copy().reset_index(drop=True)
+
 
     X = df_aligned[feature_cols]
     y = df_aligned["target"]

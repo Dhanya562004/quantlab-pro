@@ -75,3 +75,24 @@ def test_research_backtest_calculation():
     assert len(res.strategy_curve) == len(splits.test_dates)
     assert res.num_trades >= 0
     assert res.transaction_cost_bps == 10.0
+
+
+def test_model_artifact_save_and_load(tmp_path):
+    from quantlab.models.trainer import load_model_artifact, save_model_artifact, train_model
+
+    df, _ = generate_synthetic_ohlcv(symbol="ART_TEST", n_bars=200, seed=42)
+    config = FeatureConfig()
+    X, y, feat_cols, df_aligned = build_features_and_target(df, config)
+    splits = create_chronological_splits(X, y, df_aligned, config)
+
+    artifact, model = train_model("pytorch_mlp", splits, seed=42)
+    exp_id = "EXP-TEST-ARTIFACT"
+
+    meta_file = save_model_artifact(exp_id, artifact, splits, output_dir=str(tmp_path))
+    assert meta_file is not None
+
+    loaded_meta = load_model_artifact(exp_id, model_dir=str(tmp_path))
+    assert loaded_meta["experiment_id"] == exp_id
+    assert loaded_meta["model_type"] == "pytorch_mlp"
+    assert "reconstructed_model" in loaded_meta
+
