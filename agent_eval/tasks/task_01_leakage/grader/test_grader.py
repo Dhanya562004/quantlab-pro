@@ -6,7 +6,9 @@ import inspect
 import numpy as np
 import pandas as pd
 import pytest
+
 from feature_pipeline import compute_features, prepare_dataset
+
 
 EXPECTED_COLUMNS = [
     "returns",
@@ -79,6 +81,32 @@ def test_feature_columns_and_types(sample_market_data):
     assert features.index.equals(sample_market_data.index)
 
 
+def test_feature_formulas(sample_market_data):
+    """Verify the exact mathematical formulas for all five features."""
+    close = sample_market_data["close"]
+
+    expected = pd.DataFrame(index=sample_market_data.index)
+    expected["returns"] = close.pct_change()
+    expected["rolling_mean"] = close.rolling(window=20).mean()
+    expected["rolling_std"] = close.rolling(window=20).std()
+    expected["z_score"] = (
+        close - expected["rolling_mean"]
+    ) / expected["rolling_std"]
+    expected["volatility_ratio"] = (
+        close / expected["rolling_std"]
+    )
+
+    actual = compute_features(sample_market_data, window=20)
+
+    pd.testing.assert_frame_equal(
+        actual,
+        expected,
+        check_exact=False,
+        rtol=1e-7,
+        atol=1e-7,
+    )
+
+
 def test_future_perturbation_leakage(sample_market_data):
     """
     Changing observations from a future timestamp must not alter
@@ -148,10 +176,10 @@ def test_prepare_dataset_contract_and_alignment(sample_market_data, horizon):
     assert not X.isna().any().any(), "X contains NaN values."
     assert not y.isna().any(), "y contains NaN values."
     assert set(y.unique()).issubset({0, 1}), "Targets must be binary."
-    assert pd.api.types.is_integer_dtype(y.dtype), "Targets must have integer dtype."
+    assert pd.api.types.is_integer_dtype(y.dtype), (
+        "Targets must have integer dtype."
+    )
 
-    # Independently calculate which rows have complete features
-    # and a known future target.
     features = compute_features(sample_market_data, window=20)
     future_close = sample_market_data["close"].shift(-horizon)
 
@@ -162,7 +190,6 @@ def test_prepare_dataset_contract_and_alignment(sample_market_data, horizon):
         "Dataset contains invalid rows or drops valid rows."
     )
 
-    # Verify the actual target calculation, not just its data type.
     expected_y = (
         future_close.loc[valid_rows]
         > sample_market_data.loc[valid_rows, "close"]
