@@ -6,9 +6,7 @@ import inspect
 import numpy as np
 import pandas as pd
 import pytest
-
 from feature_pipeline import compute_features, prepare_dataset
-
 
 EXPECTED_COLUMNS = [
     "returns",
