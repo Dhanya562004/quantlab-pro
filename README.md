@@ -15,7 +15,7 @@
 > 
 > **QuantLab Pro** is an institutional-grade quantitative machine learning research platform built around multi-agent orchestration, leakage-resistant feature engineering, reproducible experiment tracking, and Model Context Protocol (MCP) tool integration.
 > 
-> Designed to align directly with **Tower Research Capital's Intern - AI/ML** key competencies, QuantLab Pro provides a complete test-driven Python research workspace for financial time-series modeling, PyTorch neural networks, backtest simulations, and REST/MCP MLOps infrastructure.
+> QuantLab Pro is a test-driven Python research workspace for financial time-series modeling, PyTorch neural networks, backtest simulations, and REST/MCP MLOps infrastructure.
 
 ---
 
@@ -29,6 +29,32 @@
 - **Checks Executed:** `pytest -v` (39 tests passed), `ruff check .` (0 errors), `python -m mcp_server.client` (stdio integration verified).
 - **Observed Outcome:** 100% test suite pass rate, zero lint violations, real MCP SDK stdio integration, reproducible 3-model benchmark evaluations, and persisted model artifacts.
 - **Detailed Log File:** See [`docs/dev_log.md`](file:///docs/dev_log.md) for step-by-step logs and reusable assistant prompts.
+
+---
+
+## Agent Evaluation Harness
+
+Alongside the research platform, this repo includes a small harness that tests how well coding agents handle hard tasks. It follows the same loop used for building evaluation tasks: design a task, grade it automatically, run agents many times, and analyze failures.
+
+**What is in `agent_eval/`**
+- 4 tasks: subtle data leakage, an ambiguous spec, repo conventions, and nondeterministic training.
+- Each task has a prompt, a starter repo, hidden pytest graders, a rubric, a reference solution, and known-bad solutions.
+- A runner that executes an agent solution against the grader with timeouts, and a report script that summarizes real results.
+
+**How the graders are checked**
+- The reference solution must pass and every known-bad solution must fail (CI).
+- A determinism check runs the grader N times on the same solution and fails on any difference (CI).
+- A fairness test checks that each prompt states every requirement the hidden tests check.
+
+**Results**
+
+No agent evaluation runs have been recorded yet. The evaluation harness is validated through its 20 grader self-tests. Agent performance results will be added after actual evaluation runs.
+
+See `agent_eval/FAILURE_ANALYSIS.md` for what failed, why, and what I changed in the graders.
+
+**Limits**
+- Small sample sizes; these are not a benchmark.
+- LLM-rubric checks are marked as non-deterministic and are not part of CI.
 
 ---
 
@@ -182,12 +208,6 @@ ruff check .
 ```bash
 streamlit run app.py
 ```
-
----
-
-## 📑 Resume Evidence
-
-See [`docs/resume_evidence.md`](file:///docs/resume_evidence.md) for verified resume bullets, summary sentences, and metric breakdowns.
 
 ---
 

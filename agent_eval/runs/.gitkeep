@@ -1,0 +1,3 @@
+# agent_eval/runs directory
+# Real run records and transcripts are saved here as runs/<task>/<agent>/<run_id>.json
+

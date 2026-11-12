@@ -26,6 +26,7 @@ dependencies = [
 minversion = "7.0"
 addopts = "-ra -q"
 testpaths = ["tests"]
+pythonpath = ["."]
 
 [tool.ruff]
 line-length = 120
