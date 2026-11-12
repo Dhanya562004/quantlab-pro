@@ -9,7 +9,7 @@ This development log documents verifiable engineering tasks executed during the 
 
 - **Date & Time:** `2026-10-10 09:35:00 UTC`
 - **Assistant / Tool Used:** `Antigravity AI Assistant (Gemini 3.6 Flash)`
-- **Task / Prompt:** Upgrade QuantLab Pro into a fully tested, documented, reproducible quantitative ML platform meeting Tower Research Capital's AI/ML internship requirements across 9 core sections.
+- **Task / Prompt:** Upgrade QuantLab Pro into a fully tested, documented, reproducible quantitative ML platform across 9 core sections.
 
 ### Files Modified & Created
 1. `quantlab/agents/__init__.py`, `planner_agent.py`, `training_agent.py`, `evaluation_agent.py`, `auditor_agent.py` — Exported exact class aliases (`PlannerAgent`, `TrainingAgent`, `EvaluationAgent`, `AuditorAgent`) and verified 6-stage sequential execution.

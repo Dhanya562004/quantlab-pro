@@ -23,9 +23,9 @@
 
 *Verifiable evidence recorded during repository development and testing.*
 
-- **Engineering Task:** Upgraded existing QuantLab Pro repository into a fully tested, documented, reproducible quantitative ML research platform aligned with Tower Research Capital's internship requirements.
+- **Engineering Task:** Upgraded existing QuantLab Pro repository into a fully tested, documented, reproducible quantitative ML research platform.
 - **AI Coding Assistant Used:** `Antigravity AI Assistant (Gemini 3.6 Flash)`
-- **Files Modified/Created:** [`quantlab/agents/`](file:///quantlab/agents/), [`mcp_server/`](file:///mcp_server/), [`quantlab/features/builder.py`](file:///quantlab/features/builder.py), [`quantlab/evaluation/backtest.py`](file:///quantlab/evaluation/backtest.py), [`quantlab/models/trainer.py`](file:///quantlab/models/trainer.py), [`api/main.py`](file:///api/main.py), [`tests/`](file:///tests/), [`docs/dev_log.md`](file:///docs/dev_log.md), [`docs/resume_evidence.md`](file:///docs/resume_evidence.md).
+- **Files Modified/Created:** [`quantlab/agents/`](file:///quantlab/agents/), [`mcp_server/`](file:///mcp_server/), [`quantlab/features/builder.py`](file:///quantlab/features/builder.py), [`quantlab/evaluation/backtest.py`](file:///quantlab/evaluation/backtest.py), [`quantlab/models/trainer.py`](file:///quantlab/models/trainer.py), [`api/main.py`](file:///api/main.py), [`tests/`](file:///tests/), [`docs/dev_log.md`](file:///docs/dev_log.md).
 - **Checks Executed:** `pytest -v` (39 tests passed), `ruff check .` (0 errors), `python -m mcp_server.client` (stdio integration verified).
 - **Observed Outcome:** 100% test suite pass rate, zero lint violations, real MCP SDK stdio integration, reproducible 3-model benchmark evaluations, and persisted model artifacts.
 - **Detailed Log File:** See [`docs/dev_log.md`](file:///docs/dev_log.md) for step-by-step logs and reusable assistant prompts.
@@ -46,9 +46,14 @@ Alongside the research platform, this repo includes a small harness that tests h
 - A determinism check runs the grader N times on the same solution and fails on any difference (CI).
 - A fairness test checks that each prompt states every requirement the hidden tests check.
 
-**Results**
+**Results** (from real runs only, see `agent_eval/runs/`)
 
-No agent evaluation runs have been recorded yet. The evaluation harness is validated through its 20 grader self-tests. Agent performance results will be added after actual evaluation runs.
+| Task | Agent | Runs | Passes | Main failure |
+|---|---|---|---|---|
+| 01 Leakage | <<FILL FROM report.py>> | <<n>> | <<n>> | <<from FAILURE_ANALYSIS.md>> |
+| 02 Ambiguous spec | <<FILL>> | <<n>> | <<n>> | <<FILL>> |
+| 03 Conventions | <<FILL>> | <<n>> | <<n>> | <<FILL>> |
+| 04 Nondeterminism | <<FILL>> | <<n>> | <<n>> | <<FILL>> |
 
 See `agent_eval/FAILURE_ANALYSIS.md` for what failed, why, and what I changed in the graders.
 

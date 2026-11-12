@@ -3,7 +3,7 @@ QuantLab Pro: Multi-Agent Quantitative ML Research Platform
 Streamlit Main Interactive Application.
 
 Ultra-Premium Institutional Quantitative Terminal Design System.
-Aligned to Tower Research Capital's Intern - AI/ML Job Description.
+Quantitative AI/ML Research Platform.
 """
 
 import json
@@ -828,12 +828,12 @@ elif nav_option == "🛠️ MCP Tools":
 # ==========================================
 elif nav_option == "ℹ️ Developer Guide & About":
     st.markdown("<div class='hero-title'>ℹ️ Developer Guide & Project Architecture</div>", unsafe_allow_html=True)
-    st.markdown("<div class='hero-subtitle'>Tower Research Capital alignment, agentic coding workflows, and local service execution.</div>", unsafe_allow_html=True)
+    st.markdown("<div class='hero-subtitle'>Quantitative ML architecture, agentic coding workflows, and local service execution.</div>", unsafe_allow_html=True)
 
     st.markdown(
         """
         <div class='glass-panel'>
-            <h3 style='color:#c084fc; margin-top:0;'>Tower Research Capital Competencies</h3>
+            <h3 style='color:#c084fc; margin-top:0;'>Quantitative AI/ML Research Competencies</h3>
             <p style='color:#cbd5e1;'>
                 This platform demonstrates core quantitative development and AI/ML competencies:
             </p>
