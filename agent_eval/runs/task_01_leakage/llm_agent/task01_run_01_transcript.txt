@@ -1,0 +1,69 @@
+```python feature_pipeline.py
+"""
+Feature Engineering Pipeline for Quantitative Alpha Modeling.
+Contains subtle data leakage bugs that must be resolved.
+"""
+
+import pandas as pd
+
+
+def compute_features(df: pd.DataFrame, window: int = 20) -> pd.DataFrame:
+    """
+    Computes technical features from OHLCV market data.
+
+    Columns produced:
+    - returns
+    - rolling_mean
+    - rolling_std
+    - z_score
+    - volatility_ratio
+    """
+    features = pd.DataFrame(index=df.index)
+
+    # 1. 1-bar returns
+    features["returns"] = df["close"].pct_change()
+
+    # 2. Rolling mean with backward-looking window (no center=True)
+    rolling = df["close"].rolling(window=window)
+    features["rolling_mean"] = rolling.mean()
+    features["rolling_std"] = rolling.std()
+
+    # 3. Z-score
+    features["z_score"] = (df["close"] - features["rolling_mean"]) / features["rolling_std"]
+
+    # 4. Volatility ratio
+    features["volatility_ratio"] = df["close"] / features["rolling_std"]
+
+    # No backward fill (bfill) used, preserving causality.
+
+    return features
+
+
+def prepare_dataset(
+    df: pd.DataFrame,
+    target_horizon: int = 1,
+    window: int = 20,
+) -> tuple[pd.DataFrame, pd.Series]:
+    """
+    Prepares features X and binary target y.
+    Target is 1 if close price at t + target_horizon > close price at t, else 0.
+    """
+    features = compute_features(df, window=window)
+
+    # Target calculation
+    future_close = df["close"].shift(-target_horizon)
+    target = (future_close > df["close"]).astype(int)
+    target.name = "target"
+
+    # Align features and target
+    aligned_df = features.copy()
+    aligned_df["target"] = target
+
+    # Drop rows with NaN in features (warmup period) or target (final horizon period)
+    aligned_df = aligned_df.dropna()
+
+    X = aligned_df.drop(columns=["target"])
+    y = aligned_df["target"].astype(int)
+
+    return X, y
+```

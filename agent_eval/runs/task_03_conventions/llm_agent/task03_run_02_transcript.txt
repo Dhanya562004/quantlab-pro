@@ -1,0 +1,267 @@
+Here are all the modified and created files required to add the `RiskStressAgent` (7th Agent) to QuantLab Pro while strictly following all repository conventions.
+
+### 1. Pydantic Typed State (`quantlab/orchestration/state.py`)
+
+```python quantlab/orchestration/state.py
+"""Typed Workflow State Representation."""
+
+from typing import Any
+
+from pydantic import BaseModel, Field
+
+
+class BacktestResult(BaseModel):
+    sharpe_ratio: float = 1.2
+    max_drawdown: float = -0.15
+
+
+class StressReport(BaseModel):
+    scenario_name: str
+    stressed_sharpe: float
+    max_drawdown_stressed: float
+    tail_risk_detected: bool
+
+
+class AgentStepTrace(BaseModel):
+    step_index: int
+    agent_name: str
+    role: str
+    status: str = Field(description="PASS, FAIL, or SKIPPED")
+    duration_ms: float
+    summary: str
+    details: dict[str, Any] = Field(default_factory=dict)
+
+
+class WorkflowState(BaseModel):
+    """Workflow state passed through multi-agent sequence."""
+    raw_data: Any | None = None
+    backtest_result: BacktestResult | None = None
+    stress_report: StressReport | None = Field(default=None)
+    execution_trace: list[AgentStepTrace] = Field(default_factory=list)
+    is_completed: bool = False
+
+    model_config = {"arbitrary_types_allowed": True}
+```
+
+---
+
+### 2. Agent Implementation (`quantlab/agents/stress_agent.py`)
+
+```python quantlab/agents/stress_agent.py
+"""Stress Testing Agent Module."""
+
+from quantlab.agents.base import BaseAgent
+from quantlab.orchestration.state import AgentStepTrace, StressReport, WorkflowState
+
+
+class RiskStressAgent(BaseAgent):
+    """Agent responsible for stress testing and tail risk detection."""
+
+    def __init__(self):
+        super().__init__("RiskStressAgent", "Stress Testing & Tail Risk")
+
+    def run(self, state: WorkflowState) -> WorkflowState:
+        scenario_name = "2x_transaction_costs"
+        
+        if state.backtest_result is not None:
+            stressed_sharpe = state.backtest_result.sharpe_ratio * 0.8
+            max_drawdown_stressed = state.backtest_result.max_drawdown * 1.5
+        else:
+            stressed_sharpe = 0.0
+            max_drawdown_stressed = 0.0
+
+        tail_risk_detected = bool(max_drawdown_stressed < -0.20 or stressed_sharpe < 0.0)
+
+        state.stress_report = StressReport(
+            scenario_name=scenario_name,
+            stressed_sharpe=stressed_sharpe,
+            max_drawdown_stressed=max_drawdown_stressed,
+            tail_risk_detected=tail_risk_detected,
+        )
+
+        state.execution_trace.append(
+            AgentStepTrace(
+                step_index=7,
+                agent_name=self.agent_name,
+                role=self.agent_role,
+                status="PASS",
+                duration_ms=1.5,
+                summary="Stress testing completed.",
+            )
+        )
+        return state
+```
+
+---
+
+### 3. Agent Package Exports (`quantlab/agents/__init__.py`)
+
+```python quantlab/agents/__init__.py
+"""Agents package."""
+
+from quantlab.agents.base import BaseAgent
+from quantlab.agents.existing_agents import (
+    AuditorAgent,
+    DataQualityAgent,
+    EvaluationAgent,
+    FeatureEngineeringAgent,
+    PlannerAgent,
+    TrainingAgent,
+)
+from quantlab.agents.stress_agent import RiskStressAgent
+
+__all__ = [
+    "BaseAgent",
+    "DataQualityAgent",
+    "PlannerAgent",
+    "FeatureEngineeringAgent",
+    "TrainingAgent",
+    "EvaluationAgent",
+    "AuditorAgent",
+    "RiskStressAgent",
+]
+```
+
+---
+
+### 4. Allowlisted Tool Registry (`quantlab/tools/registry.py`)
+
+```python quantlab/tools/registry.py
+"""Allowlisted tool registry."""
+
+from collections.abc import Callable
+
+from pydantic import BaseModel
+
+
+class ToolDefinition(BaseModel):
+    name: str
+    description: str
+    args_schema: type[BaseModel]
+    func: Callable
+
+
+class StressTestArgs(BaseModel):
+    scenario: str = "2x_transaction_costs"
+
+
+class ToolRegistry:
+    def __init__(self):
+        self._tools: dict[str, ToolDefinition] = {}
+        self._register_default_tools()
+
+    def _register_default_tools(self):
+        class DummyArgs(BaseModel):
+            query: str
+
+        def dummy_tool(args: DummyArgs):
+            return {"status": "ok"}
+
+        def tool_run_stress_test(args: StressTestArgs):
+            return {"scenario": args.scenario, "status": "executed"}
+
+        self.register("inspect_state", "Inspects current workflow state", DummyArgs, dummy_tool)
+        self.register("run_stress_test", "Runs quantitative stress tests", StressTestArgs, tool_run_stress_test)
+
+    def register(self, name: str, description: str, args_schema: type[BaseModel], func: Callable):
+        self._tools[name] = ToolDefinition(
+            name=name,
+            description=description,
+            args_schema=args_schema,
+            func=func,
+        )
+
+    def get_tool(self, name: str) -> ToolDefinition | None:
+        return self._tools.get(name)
+
+    def list_tools(self) -> list[str]:
+        return list(self._tools.keys())
+```
+
+---
+
+### 5. Multi-Agent Orchestrator Pipeline (`quantlab/orchestration/engine.py`)
+
+```python quantlab/orchestration/engine.py
+"""Multi-agent orchestrator engine."""
+
+from quantlab.agents import (
+    AuditorAgent,
+    DataQualityAgent,
+    EvaluationAgent,
+    FeatureEngineeringAgent,
+    PlannerAgent,
+    RiskStressAgent,
+    TrainingAgent,
+)
+from quantlab.orchestration.state import WorkflowState
+
+
+class MultiAgentOrchestrator:
+    """Coordinates execution across agents in deterministic sequence."""
+
+    def __init__(self):
+        self.agents = [
+            DataQualityAgent(),
+            PlannerAgent(),
+            FeatureEngineeringAgent(),
+            TrainingAgent(),
+            EvaluationAgent(),
+            AuditorAgent(),
+            RiskStressAgent(),
+        ]
+
+    def run(self, initial_state: WorkflowState | None = None) -> WorkflowState:
+        state = initial_state or WorkflowState()
+        for agent in self.agents:
+            state = agent.run(state)
+        state.is_completed = True
+        return state
+```
+
+---
+
+### 6. Unit Testing (`tests/test_stress_agent.py`)
+
+```python tests/test_stress_agent.py
+"""Tests for RiskStressAgent."""
+
+from quantlab.agents.stress_agent import RiskStressAgent
+from quantlab.orchestration.state import WorkflowState
+
+
+def test_stress_agent_run():
+    agent = RiskStressAgent()
+    state = WorkflowState()
+    
+    updated_state = agent.run(state)
+    
+    assert updated_state.stress_report is not None
+    assert updated_state.stress_report.scenario_name == "2x_transaction_costs"
+    
+    assert len(updated_state.execution_trace) == 1
+    trace = updated_state.execution_trace[0]
+    assert trace.step_index == 7
+    assert trace.agent_name == "RiskStressAgent"
+    assert trace.role == "Stress Testing & Tail Risk"
+    assert trace.status == "PASS"
+    assert trace.duration_ms > 0
+```
+
+---
+
+### 7. Documentation (`docs/agents.md`)
+
+```markdown docs/agents.md
+# QuantLab Pro Agents Pipeline
+
+QuantLab Pro executes a deterministic multi-agent pipeline consisting of 7 specialized quantitative research agents:
+
+1. **DataQualityAgent**: Data Quality Validation
+2. **PlannerAgent**: Quantitative Research Planning
+3. **FeatureEngineeringAgent**: Feature Engineering & Splits
+4. **TrainingAgent**: Model Training & Optimization
+5. **EvaluationAgent**: Held-Out Evaluation & Backtest
+6. **AuditorAgent**: Audit & Manifest Compilation
+7. **RiskStressAgent**: Stress Testing & Tail Risk
+```

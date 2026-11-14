@@ -1,0 +1,115 @@
+```python indicators.py
+"""
+Financial Technical Indicators Module.
+Implement the functions below adhering to production standards and numerical robustness.
+"""
+
+import numpy as np
+import pandas as pd
+
+
+def compute_rolling_volatility(
+    prices: pd.Series,
+    window: int = 20,
+    annualized: bool = True,
+    trading_days: int = 252,
+) -> pd.Series:
+    """
+    Computes rolling realized volatility of percentage returns (prices.pct_change()).
+    
+    Parameters:
+    - prices: pd.Series of price data.
+    - window: int, rolling window size for returns.
+    - annualized: bool, whether to annualize volatility.
+    - trading_days: int, number of trading days per year for annualization factor.
+    
+    Returns:
+    - pd.Series of rolling volatility with the same index as prices.
+    """
+    if not isinstance(prices, pd.Series):
+        prices = pd.Series(prices)
+
+    if (prices <= 0).any():
+        raise ValueError("Prices must be strictly positive")
+
+    # If length of prices is 0, return empty series
+    if len(prices) == 0:
+        return pd.Series(index=prices.index, dtype=float)
+
+    # Calculate percentage returns
+    returns = prices.pct_change()
+
+    # Compute rolling standard deviation with Bessel's correction (ddof=1)
+    # Using closed='right' by default via pandas rolling.
+    # Note: returns has NaN at index 0. A window of W returns requires W valid return values,
+    # which corresponds to window + 1 prices (indices 0 through window).
+    rolling_std = returns.rolling(window=window, min_periods=window).std(ddof=1)
+
+    if annualized:
+        factor = np.sqrt(trading_days)
+        rolling_vol = rolling_std * factor
+    else:
+        rolling_vol = rolling_std
+
+    # Ensure zero variance / flat price periods evaluate to 0.0 for completed windows
+    # where the rolling std is 0.0 (and not NaN).
+    # Specifically, where min_periods=window is met, flat prices give std = 0.0.
+    # Pandas rolling std already returns 0.0 for constant series when window is met.
+    # We explicitly ensure non-NaN entries with 0 std are 0.0.
+    rolling_vol = rolling_vol.fillna(value=np.nan)
+
+    return rolling_vol
+
+
+def compute_exponential_momentum(
+    prices: pd.Series,
+    span: int = 14,
+) -> pd.Series:
+    """
+    Computes normalized exponential moving average distance:
+    momentum = (prices - EMA) / EMA
+    
+    Parameters:
+    - prices: pd.Series of price data.
+    - span: int, span parameter for EMA.
+    
+    Returns:
+    - pd.Series of exponential momentum with the same index as prices.
+    """
+    if not isinstance(prices, pd.Series):
+        prices = pd.Series(prices)
+
+    if (prices <= 0).any():
+        raise ValueError("Prices must be strictly positive")
+
+    if len(prices) == 0:
+        return pd.Series(index=prices.index, dtype=float)
+
+    ema = prices.ewm(span=span, adjust=False).mean()
+    momentum = (prices - ema) / ema
+
+    return momentum
+```
+
+```markdown NOTES.md
+## Technical Assumptions
+
+This document outlines the design decisions, boundary conventions, and technical assumptions implemented in the financial technical indicators module (`indicators.py`).
+
+### 1. Rolling Window Closure Convention (`closed='right'`)
+- **Convention**: Standard pandas rolling window behavior (`closed='right'`) is utilized. This means that a rolling window ending at timestamp $T$ includes observation $T$ and the preceding $W-1$ observations (where $W$ is the window size).
+
+### 2. Warmup & NaN Policy
+- **Returns Calculation Loss**: Percentage returns (`prices.pct_change()`) inherently introduce a `NaN` at index $0$ because no prior price exists for the first bar.
+- **Window Requirement**: Computing a rolling volatility over a window of size $W$ requires $W$ valid (non-`NaN`) percentage return values. Consequently, a full window of returns requires $W + 1$ raw price observations (indices $0$ through $W$).
+- **First Valid Output**: The first valid, non-`NaN` rolling volatility observation appears strictly at index `window` (the $(window + 1)$-th price bar).
+- **Warmup Period**: All initial price bars from index $0$ through $window - 1$ evaluate to `NaN`.
+- **Short Series Handling**: If `len(prices) <= window`, the output is entirely `NaN` across all indices, as it is impossible to accumulate $window$ return observations.
+
+### 3. Annualization Basis
+- **Standard Factor**: When `annualized=True`, rolling standard deviation of percentage returns is multiplied by an annualization factor of $\sqrt{\text{trading\_days}}$, where the default standard equity trading year assumes $\text{trading\_days} = 252$ ($\sqrt{252}$).
+
+### 4. Zero Variance and Robustness
+- **Flat Prices**: For periods where prices remain constant over a completed window ($\ge window$), the sample standard deviation evaluates to $0.0$ rather than `NaN` or triggering division-by-zero errors. Warmup bars ($< window$) correctly retain `NaN`.
+- **Strictly Positive Prices**: Input series are validated to ensure all price values are strictly positive ($\le 0$ raises a `ValueError`).
+```

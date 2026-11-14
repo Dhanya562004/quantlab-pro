@@ -1,0 +1,20 @@
+{
+  "task_id": "task_01_leakage",
+  "agent_name": "llm_agent",
+  "run_id": "task01_run_05",
+  "timestamp": "2026-11-14T04:39:20.717939+00:00",
+  "passed": false,
+  "tests_passed": 0,
+  "tests_failed": 0,
+  "tests_total": 0,
+  "duration_seconds": 1.987616700003855,
+  "error_message": "harness_error: Malformed markdown: found odd number of code fence markers (1).",
+  "test_output": "Harness parsing failure:\nMalformed markdown: found odd number of code fence markers (1).",
+  "rubric_results": {
+    "solution_applied": false
+  },
+  "files_modified": [],
+  "status": "harness_error",
+  "model_name": "gemini-3.5-flash-lite",
+  "mode": "oneshot"
+}

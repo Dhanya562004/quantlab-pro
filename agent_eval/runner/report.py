@@ -12,16 +12,43 @@ from pathlib import Path
 from typing import Any
 
 
+def is_valid_evaluation_run(data: dict[str, Any]) -> bool:
+    """
+    Checks if a run record is a valid evaluation run.
+    Excludes preliminary pilot runs and harness errors.
+    Includes valid passed and failed evaluation runs.
+    """
+    if not isinstance(data, dict):
+        return False
+    if "task_id" not in data or "agent_name" not in data or "passed" not in data:
+        return False
+
+    # Exclude preliminary pilot runs
+    run_id = data.get("run_id", "")
+    if run_id == "pilot_run_01" or run_id.startswith("pilot_"):
+        return False
+
+    # Exclude harness errors (parsing failures, malformed output, etc.)
+    status = data.get("status", "")
+    if status == "harness_error":
+        return False
+    error_message = data.get("error_message") or ""
+    if error_message.startswith("harness_error:"):
+        return False
+
+    return True
+
+
 def load_all_runs(runs_dir: Path) -> list[dict[str, Any]]:
-    """Loads all run JSON files from runs_dir."""
+    """Loads all valid run JSON files from runs_dir."""
     runs = []
     if not runs_dir.exists():
         return runs
 
-    for json_file in runs_dir.rglob("*.json"):
+    for json_file in sorted(runs_dir.rglob("*.json")):
         try:
             data = json.loads(json_file.read_text(encoding="utf-8"))
-            if "task_id" in data and "agent_name" in data and "passed" in data:
+            if is_valid_evaluation_run(data):
                 runs.append(data)
         except Exception:
             continue

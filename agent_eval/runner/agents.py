@@ -410,7 +410,13 @@ class LLMAgentRunner(AgentRunner):
         provider_used = ""
         exact_model = self.model_name
 
-        if openai_key:
+        if "gemini" in self.model_name.lower() and gemini_key:
+            provider_used = "gemini"
+            response_text, exact_model = self._call_gemini(gemini_key, prompt_payload)
+        elif "claude" in self.model_name.lower() and anthropic_key:
+            provider_used = "anthropic"
+            response_text, exact_model = self._call_anthropic(anthropic_key, prompt_payload)
+        elif openai_key:
             provider_used = "openai"
             response_text, exact_model = self._call_openai(openai_key, prompt_payload)
         elif gemini_key:
@@ -482,7 +488,13 @@ class LLMAgentRunner(AgentRunner):
             # Format conversation for LLM call
             combined_prompt = "\n".join(f"{m['role'].upper()}: {m['content']}" for m in history)
 
-            if openai_key:
+            if "gemini" in self.model_name.lower() and gemini_key:
+                provider_used = "gemini"
+                resp_text, exact_model = self._call_gemini(gemini_key, combined_prompt)
+            elif "claude" in self.model_name.lower() and anthropic_key:
+                provider_used = "anthropic"
+                resp_text, exact_model = self._call_anthropic(anthropic_key, combined_prompt)
+            elif openai_key:
                 provider_used = "openai"
                 resp_text, exact_model = self._call_openai(openai_key, combined_prompt)
             elif gemini_key:

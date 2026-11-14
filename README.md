@@ -50,9 +50,35 @@ Alongside the research platform, this repo includes a small harness that tests h
 - A workspace isolation test proves that the hidden grader never exists in the agent workspace during execution.
 - Syntax-tolerant code extraction with explicit `harness_error` classification for unparseable output.
 
-**Results: pending**
+**Evaluation Results**
 
-See `agent_eval/FAILURE_ANALYSIS.md` for what failed, why, and what I changed in the graders.
+Summary of 20 valid evaluation runs (`gemini-3.5-flash-lite`, `--mode oneshot`):
+
+- **Total valid runs:** 20
+- **Passed:** 14
+- **Failed:** 6
+- **Overall pass rate:** 70% (14/20)
+- **Task 01 (`task_01_leakage`):** 0/5 (0%)
+- **Task 02 (`task_02_ambiguous_spec`):** 5/5 (100%)
+- **Task 03 (`task_03_conventions`):** 4/5 (80%)
+- **Task 04 (`task_04_nondeterminism`):** 5/5 (100%)
+
+| Task | Agent | Runs | Passes | Pass Rate | Main Failure Reason |
+|---|---|:---:|:---:|:---:|---|
+| `task_01_leakage` | `llm_agent` | 5 | 0 | 0.0% | Target row alignment in `prepare_dataset` |
+| `task_02_ambiguous_spec` | `llm_agent` | 5 | 5 | 100.0% | None (100% pass) |
+| `task_03_conventions` | `llm_agent` | 5 | 4 | 80.0% | Agent test assertion mismatch (run 03) |
+| `task_04_nondeterminism` | `llm_agent` | 5 | 5 | 100.0% | None (100% pass) |
+
+**Exclusions and run integrity:**
+- Out of 22 raw run files in `agent_eval/runs/`, 2 records were excluded:
+  - `pilot_run_01` was a preliminary pilot run and excluded from formal evaluation metrics.
+  - `task01_run_05` was a harness error caused by malformed Markdown formatting from the model and excluded from pass-rate calculations.
+- All valid evaluation runs are reported without hiding failures:
+  - In Task 01, 0/5 runs passed: the model avoided backward fill leakage, but failed 3 hidden tests for target row alignment when shifting forward targets in `prepare_dataset`.
+  - In Task 03, 4/5 runs passed: 1 run failed because a self-generated unit test had an assertion mismatch against its own implementation.
+
+See [`agent_eval/FAILURE_ANALYSIS.md`](agent_eval/FAILURE_ANALYSIS.md) for what failed, why, and how the graders were reviewed.
 
 **Limits**
 - Small sample sizes; these are not a benchmark.
