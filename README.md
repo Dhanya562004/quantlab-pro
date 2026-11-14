@@ -50,14 +50,7 @@ Alongside the research platform, this repo includes a small harness that tests h
 - A workspace isolation test proves that the hidden grader never exists in the agent workspace during execution.
 - Syntax-tolerant code extraction with explicit `harness_error` classification for unparseable output.
 
-**Results** (from real runs only, see `agent_eval/runs/`)
-
-| Task | Agent | Runs | Passes | Main failure |
-|---|---|---|---|---|
-| 01 Leakage | TODO: not run yet | TODO: not run yet | TODO: not run yet | TODO: not run yet |
-| 02 Ambiguous spec | TODO: not run yet | TODO: not run yet | TODO: not run yet | TODO: not run yet |
-| 03 Conventions | TODO: not run yet | TODO: not run yet | TODO: not run yet | TODO: not run yet |
-| 04 Nondeterminism | TODO: not run yet | TODO: not run yet | TODO: not run yet | TODO: not run yet |
+**Results: pending**
 
 See `agent_eval/FAILURE_ANALYSIS.md` for what failed, why, and what I changed in the graders.
 
