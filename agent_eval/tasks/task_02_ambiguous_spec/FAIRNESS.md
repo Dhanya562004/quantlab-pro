@@ -1,0 +1,27 @@
+# Task 02 Fairness Map: Hidden Grader Assertions vs Prompt Specification
+
+This document maps every assertion evaluated by the hidden grader (`grader/test_grader.py`) directly to the explicit sentence in `prompt.md` that specifies the behavior. It ensures no hidden requirements, unstated parameters, or unfair test traps exist.
+
+| Grader Function | Hidden Assertion | Explicit Sentence in `prompt.md` |
+| :--- | :--- | :--- |
+| `test_public_api_signatures` | `compute_rolling_volatility(prices, window=20, annualized=True, trading_days=252)` signature and defaults | `### 1. compute_rolling_volatility(prices: pd.Series, window: int = 20, annualized: bool = True, trading_days: int = 252) -> pd.Series` |
+| `test_public_api_signatures` | `compute_exponential_momentum(prices, span=14)` signature and default | `### 2. compute_exponential_momentum(prices: pd.Series, span: int = 14) -> pd.Series` |
+| `test_rolling_volatility_mathematical_precision` | `vol.iloc[:20].isna().all()` | "The initial `window` price bars (indices $0$ through $window - 1$) must all evaluate to `NaN`." |
+| `test_rolling_volatility_mathematical_precision` | `not pd.isna(vol.iloc[20])` | "The first valid (non-NaN) rolling volatility observation appears at index `window` (the $(window + 1)$-th price bar)." |
+| `test_rolling_volatility_mathematical_precision` | `assert_allclose(vol.iloc[20], ret.iloc[1:21].std(ddof=1) * sqrt(252))` | "Computes rolling realized volatility of percentage returns (`prices.pct_change()`). Uses sample standard deviation with Bessel's correction (`ddof=1`)." |
+| `test_rolling_volatility_mathematical_precision` | `assert_allclose(vol.iloc[25], ret.iloc[6:26].std(ddof=1) * sqrt(252))` | "Computes rolling realized volatility of percentage returns (`prices.pct_change()`). Uses sample standard deviation with Bessel's correction (`ddof=1`)." |
+| `test_annualized_scaling` | `vol_annual / vol_raw == sqrt(252)` | "If `annualized=True`, multiplies rolling standard deviation by $\sqrt{\text{trading\_days}}$. If `False`, returns unannualized rolling standard deviation." |
+| `test_annualized_scaling` | Custom parameter `trading_days=365` scales by `sqrt(365)` | "If `annualized=True`, multiplies rolling standard deviation by $\sqrt{\text{trading\_days}}$." |
+| `test_zero_variance_and_flat_prices` | `vol.iloc[:15].isna().all()` on constant price series | "Warmup bars ($< window$) must still evaluate to `NaN`." |
+| `test_zero_variance_and_flat_prices` | `(vol.iloc[15:] == 0.0).all()` on constant price series | "Handles zero variance / flat price periods gracefully: if prices are constant over a completed window (bars at index $\ge window$), rolling volatility must evaluate to `0.0` (not `NaN` or unhandled division)." |
+| `test_invalid_inputs_and_short_series` | `vol_short.isna().all()` for `len(prices) < window` | "When `len(prices) <= window` (including the boundary case `len(prices) == window`), returns a `pd.Series` of all `NaN`s with the identical index and length as `prices`..." |
+| `test_invalid_inputs_and_short_series` | `vol_exact.isna().all()` for `len(prices) == window` | "When `len(prices) <= window` (including the boundary case `len(prices) == window`), returns a `pd.Series` of all `NaN`s with the identical index and length as `prices`, because at most $window - 1$ returns are available." |
+| `test_invalid_inputs_and_short_series` | Raises `ValueError` if `prices` contains $\le 0$ in `compute_rolling_volatility` | "If `prices` contains any non-positive values ($\le 0$), raises `ValueError("Prices must be strictly positive")`." |
+| `test_invalid_inputs_and_short_series` | Raises `ValueError` if `prices` contains $\le 0$ in `compute_exponential_momentum` | "If `prices` contains any non-positive values ($\le 0$), raises `ValueError("Prices must be strictly positive")`." |
+| `test_exact_window_plus_one_single_non_nan` | `vol_one.notna().sum() == 1` and `not pd.isna(vol_one.iloc[window])` | "The first valid (non-NaN) rolling volatility observation appears at index `window` (the $(window + 1)$-th price bar). The initial `window` price bars (indices $0$ through $window - 1$) must all evaluate to `NaN`." |
+| `test_exponential_momentum_calculation` | `mom == (prices - ema) / ema` where `ema = prices.ewm(span=10, adjust=False).mean()` | "Computes normalized exponential moving average distance: $\text{momentum} = \frac{\text{prices} - \text{EMA}}{\text{EMA}}$ where $\text{EMA} = \text{prices.ewm}(span=span, adjust=False).\text{mean}()$." |
+| `test_notes_file_and_assumptions` | `NOTES.md` exists in workspace root | "You **MUST** create a file named `NOTES.md` in the workspace root..." |
+| `test_notes_file_and_assumptions` | Contains `'## Technical Assumptions'` heading | "...containing a section heading `## Technical Assumptions`..." |
+| `test_notes_file_and_assumptions` | Documents window closure (`closed='right'`) | "...that explicitly states and explains: The chosen rolling window closure convention (`closed='right'`)." |
+| `test_notes_file_and_assumptions` | Documents warmup NaN policy (`NaN`s for bars $< window$, first valid at index `window`, all `NaN` if $\le window$) | "...that explicitly states and explains: The warmup `NaN` policy (preserving `NaN`s for initial $window$ bars with first valid value at index `window`, and all `NaN`s when `len(prices) <= window`)." |
+| `test_notes_file_and_assumptions` | Documents annualization basis ($\sqrt{252}$) | "...that explicitly states and explains: The annualization basis factor ($\sqrt{252}$ trading days)." |

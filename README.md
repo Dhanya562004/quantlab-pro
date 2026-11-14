@@ -13,7 +13,7 @@
 > 
 > 📁 **GitHub Repository**: 📦 [**https://github.com/Dhanya562004/quantlab-pro.git**](https://github.com/Dhanya562004/quantlab-pro)
 > 
-> **QuantLab Pro** is an institutional-grade quantitative machine learning research platform built around multi-agent orchestration, leakage-resistant feature engineering, reproducible experiment tracking, and Model Context Protocol (MCP) tool integration.
+> **QuantLab Pro** is a quantitative machine learning research platform built around multi-agent orchestration, leakage-resistant feature engineering, reproducible experiment tracking, and Model Context Protocol (MCP) tool integration.
 > 
 > QuantLab Pro is a test-driven Python research workspace for financial time-series modeling, PyTorch neural networks, backtest simulations, and REST/MCP MLOps infrastructure.
 
@@ -24,9 +24,9 @@
 *Verifiable evidence recorded during repository development and testing.*
 
 - **Engineering Task:** Upgraded existing QuantLab Pro repository into a fully tested, documented, reproducible quantitative ML research platform.
-- **AI Coding Assistant Used:** `Antigravity AI Assistant (Gemini 3.6 Flash)`
+- **AI Coding Assistant Used:** `<PASTE THE EXACT NAME FROM MY TOOL SETTINGS OR LOGS, or write: not recorded>`
 - **Files Modified/Created:** [`quantlab/agents/`](file:///quantlab/agents/), [`mcp_server/`](file:///mcp_server/), [`quantlab/features/builder.py`](file:///quantlab/features/builder.py), [`quantlab/evaluation/backtest.py`](file:///quantlab/evaluation/backtest.py), [`quantlab/models/trainer.py`](file:///quantlab/models/trainer.py), [`api/main.py`](file:///api/main.py), [`tests/`](file:///tests/), [`docs/dev_log.md`](file:///docs/dev_log.md).
-- **Checks Executed:** `pytest -v` (39 tests passed), `ruff check .` (0 errors), `python -m mcp_server.client` (stdio integration verified).
+- **Checks Executed:** `pytest -v tests/` (39 platform tests passed), `pytest -v agent_eval/tests/` (21 harness tests passed), `ruff check .` (0 errors), `python -m mcp_server.client` (stdio integration verified).
 - **Observed Outcome:** 100% test suite pass rate, zero lint violations, real MCP SDK stdio integration, reproducible 3-model benchmark evaluations, and persisted model artifacts.
 - **Detailed Log File:** See [`docs/dev_log.md`](file:///docs/dev_log.md) for step-by-step logs and reusable assistant prompts.
 
@@ -132,7 +132,7 @@ Evaluated on `SYNTH_BTC` dataset (500 bars, seed 42) with chronological 60/20/20
 ### Confusion Matrix & Model Findings
 - **Majority Baseline:** Predicts all samples as class 1 (Up), yielding 46.88% accuracy (reflecting the exact class ratio). Zero trades executed in backtest.
 - **Logistic Regression:** Achieves 43.75% test accuracy with 21 position transitions.
-- **PyTorch MLP:** Achieves top test accuracy of **47.92%** and F1 score of **0.4643**, demonstrating improved class balance handling (`[[31, 20], [30, 15]]`).
+- **PyTorch MLP:** Achieves test accuracy of **47.92%** and F1 score of **0.4643** (`[[31, 20], [30, 15]]`). No model has a trading edge on this dataset (test accuracy 47.92%, negative Sharpe of -2.33).
 
 ### Leakage Prevention Rules
 1. Features at time $t$ use OHLCV data up to time $t$ ONLY.
@@ -199,9 +199,13 @@ uvicorn api.main:app --reload --port 8000
 pip install -r requirements.txt
 ```
 
-### 2. Run Test Suite (39 Tests Passed)
+### 2. Run Test Suites
 ```bash
-pytest -v
+# Platform tests (39 passed)
+pytest -v tests/
+
+# Agent evaluation harness self-tests (21 passed)
+pytest -v agent_eval/tests/
 ```
 
 ### 3. Run Ruff Linter

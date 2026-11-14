@@ -36,13 +36,18 @@ def test_rolling_volatility_mathematical_precision(sample_prices):
     assert isinstance(vol, pd.Series)
     assert len(vol) == len(sample_prices)
 
-    # First window-1 values should be NaN
-    assert vol.iloc[:19].isna().all(), "Warmup bars must be NaN"
+    # Initial window bars (indices 0 to window - 1) must be NaN because pct_change loses bar 0
+    assert vol.iloc[:20].isna().all(), "First window bars (indices 0 to 19 for window=20) must be NaN"
+    assert not pd.isna(vol.iloc[20]), "Index window (bar 20) must be the first valid non-NaN value"
 
-    # Compute analytical reference value at index 25
+    # Compute analytical reference value at index 20 (returns 1..20, 20 observations)
     ret = sample_prices.pct_change()
-    expected_val = ret.iloc[6:26].std(ddof=1) * np.sqrt(252)
-    np.testing.assert_allclose(vol.iloc[25], expected_val, rtol=1e-6, atol=1e-6)
+    expected_val_20 = ret.iloc[1:21].std(ddof=1) * np.sqrt(252)
+    np.testing.assert_allclose(vol.iloc[20], expected_val_20, rtol=1e-6, atol=1e-6)
+
+    # Compute analytical reference value at index 25 (returns 6..25, 20 observations)
+    expected_val_25 = ret.iloc[6:26].std(ddof=1) * np.sqrt(252)
+    np.testing.assert_allclose(vol.iloc[25], expected_val_25, rtol=1e-6, atol=1e-6)
 
 
 def test_annualized_scaling(sample_prices):
@@ -66,6 +71,8 @@ def test_zero_variance_and_flat_prices():
     flat_prices = pd.Series([100.0] * 35)
     vol = compute_rolling_volatility(flat_prices, window=15, annualized=True)
     assert isinstance(vol, pd.Series)
+    # Warmup bars (0..14) must remain NaN even when prices are flat
+    assert vol.iloc[:15].isna().all(), "Warmup bars (indices 0 to window-1) must remain NaN on flat series"
     # Post-warmup values must evaluate to 0.0
     post_warmup = vol.iloc[15:]
     assert (post_warmup == 0.0).all(), "Flat price periods must have volatility of 0.0"
@@ -79,6 +86,20 @@ def test_invalid_inputs_and_short_series():
     assert len(vol_short) == 3
     assert vol_short.isna().all()
 
+    # Exact window boundary: len == window (cannot compute rolling volatility because returns has only window - 1 bars)
+    exact_window_prices = pd.Series([10.0, 11.0, 12.0, 13.0, 14.0])
+    vol_exact = compute_rolling_volatility(exact_window_prices, window=5)
+    assert len(vol_exact) == 5
+    assert vol_exact.isna().all(), "When len(prices) == window, all outputs must be NaN (only window-1 returns exist)"
+
+    # Series with window + 1 prices has exactly 1 valid rolling volatility value at index window
+    one_val_prices = pd.Series([10.0, 11.0, 12.0, 13.0, 14.0, 15.0])
+    vol_one = compute_rolling_volatility(one_val_prices, window=5)
+    assert len(vol_one) == 6
+    assert vol_one.iloc[:5].isna().all(), "First window bars must be NaN"
+    assert not pd.isna(vol_one.iloc[5]), "Index window must have valid volatility value"
+    assert vol_one.notna().sum() == 1, "Expected exactly one non-NaN value when len(prices) == window + 1"
+
     # Non-positive prices in rolling volatility
     with pytest.raises(ValueError):
         compute_rolling_volatility(pd.Series([10.0, 0.0, 12.0]))
@@ -89,6 +110,16 @@ def test_invalid_inputs_and_short_series():
     # Non-positive prices in exponential momentum
     with pytest.raises(ValueError):
         compute_exponential_momentum(pd.Series([10.0, 0.0, 12.0]))
+
+
+def test_exact_window_plus_one_single_non_nan():
+    """Verify series of length window + 1 produces exactly one non-NaN value at the final index."""
+    prices = pd.Series([10.0, 11.0, 12.0, 13.0, 14.0, 15.0])
+    vol = compute_rolling_volatility(prices, window=5)
+    assert len(vol) == 6
+    assert vol.iloc[:5].isna().all(), "First window bars must be NaN"
+    assert not pd.isna(vol.iloc[5]), "Index window must have valid volatility value"
+    assert vol.notna().sum() == 1, "Expected exactly one non-NaN value when len(prices) == window + 1"
 
 
 def test_exponential_momentum_calculation(sample_prices):

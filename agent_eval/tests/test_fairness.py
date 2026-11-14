@@ -32,7 +32,22 @@ def test_fairness_task_01_leakage():
 
 
 def test_fairness_task_02_ambiguous_spec():
-    prompt = (TASKS_DIR / "task_02_ambiguous_spec" / "prompt.md").read_text(encoding="utf-8")
+    task_dir = TASKS_DIR / "task_02_ambiguous_spec"
+    prompt = (task_dir / "prompt.md").read_text(encoding="utf-8")
+    fairness_map = (task_dir / "FAIRNESS.md").read_text(encoding="utf-8")
+
+    # Assert fairness map covers all key test functions
+    for fn_name in [
+        "test_public_api_signatures",
+        "test_rolling_volatility_mathematical_precision",
+        "test_annualized_scaling",
+        "test_zero_variance_and_flat_prices",
+        "test_invalid_inputs_and_short_series",
+        "test_exact_window_plus_one_single_non_nan",
+        "test_exponential_momentum_calculation",
+        "test_notes_file_and_assumptions",
+    ]:
+        assert fn_name in fairness_map, f"FAIRNESS.md must map test '{fn_name}'"
 
     # Assert functions and parameters are documented
     assert "compute_rolling_volatility" in prompt
@@ -50,6 +65,8 @@ def test_fairness_task_02_ambiguous_spec():
     assert "closed" in prompt or "right" in prompt
     assert "NaN" in prompt or "warmup" in prompt
     assert "252" in prompt or "annual" in prompt
+    assert "<= window" in prompt
+    assert "index" in prompt
 
 
 def test_fairness_task_03_conventions():
