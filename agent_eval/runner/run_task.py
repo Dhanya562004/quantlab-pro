@@ -22,8 +22,10 @@ from typing import Any
 from agent_eval.runner.agents import (
     AgentRunner,
     DirectoryOverlayRunner,
+    HarnessParsingError,
     ImportAgentRunner,
     LLMAgentRunner,
+    list_provider_models,
 )
 
 
@@ -42,6 +44,9 @@ class EvaluationResult:
     test_output: str = ""
     rubric_results: dict[str, Any] = field(default_factory=dict)
     files_modified: list[str] = field(default_factory=list)
+    status: str = "completed"  # "passed", "failed", "harness_error"
+    model_name: str | None = None
+    mode: str = "oneshot"
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -104,6 +109,31 @@ def run_task(
             solve_meta = runner.solve(prompt=prompt_text, workspace_dir=temp_dir)
             files_modified = solve_meta.get("files_modified", [])
             transcript = solve_meta.get("transcript", "")
+            exact_model = solve_meta.get("model")
+            exec_mode = solve_meta.get("mode", getattr(runner, "mode", "oneshot"))
+        except HarnessParsingError as hpe:
+            duration = time.perf_counter() - start_time
+            res = EvaluationResult(
+                task_id=task_id,
+                agent_name=agent_name,
+                run_id=run_id_val,
+                timestamp=datetime.now(timezone.utc).isoformat(),
+                passed=False,
+                tests_passed=0,
+                tests_failed=0,
+                tests_total=0,
+                duration_seconds=duration,
+                error_message=f"harness_error: {hpe}",
+                test_output=f"Harness parsing failure:\n{hpe}",
+                rubric_results={"solution_applied": False},
+                files_modified=[],
+                status="harness_error",
+                model_name=getattr(runner, "model_name", None),
+                mode=getattr(runner, "mode", "oneshot"),
+            )
+            if record:
+                _save_run_result(res, transcript, runs_dir)
+            return res
         except Exception as exc:
             duration = time.perf_counter() - start_time
             res = EvaluationResult(
@@ -120,6 +150,9 @@ def run_task(
                 test_output=f"Exception during solve step:\n{exc}",
                 rubric_results={"solution_applied": False},
                 files_modified=[],
+                status="failed",
+                model_name=getattr(runner, "model_name", None),
+                mode=getattr(runner, "mode", "oneshot"),
             )
             if record:
                 _save_run_result(res, transcript, runs_dir)
@@ -201,6 +234,9 @@ def run_task(
             test_output=raw_stdout,
             rubric_results=rubric_results,
             files_modified=files_modified,
+            status="passed" if overall_passed else "failed",
+            model_name=exact_model or getattr(runner, "model_name", None),
+            mode=exec_mode,
         )
 
         if record:
@@ -253,15 +289,41 @@ def _save_run_result(res: EvaluationResult, transcript: str, runs_dir: Path | No
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run an evaluation task against an agent solution.")
-    parser.add_argument("--task", required=True, help="Task name or path (e.g. task_01_leakage)")
+    parser.add_argument("--task", help="Task name or path (e.g. task_01_leakage)")
     parser.add_argument("--solution", help="Path to solution directory or diff file")
     parser.add_argument("--agent", default="import", choices=["import", "llm", "overlay"])
+    parser.add_argument("--mode", default="oneshot", choices=["oneshot", "agent"], help="Agent interaction mode")
     parser.add_argument("--model", help="LLM model name if using --agent llm")
     parser.add_argument("--run-id", help="Optional run id string")
-    parser.add_argument("--timeout", type=int, default=45, help="Timeout in seconds")
+    parser.add_argument("--timeout", type=int, default=300, help="Timeout in seconds")
+    parser.add_argument("--max-steps", type=int, default=15, help="Maximum steps in agent loop")
+    parser.add_argument("--runs", type=int, default=1, help="Number of evaluation runs")
     parser.add_argument("--record", action="store_true", help="Record result into runs/ directory")
+    parser.add_argument("--dry-run", action="store_true", help="Print plan and token/cost estimate without calling API")
+    parser.add_argument(
+        "--list-models",
+        nargs="?",
+        const="all",
+        help="List available model names from provider API (openai, gemini, anthropic)",
+    )
 
     args = parser.parse_args()
+
+    # Handle --list-models flag
+    if args.list_models:
+        prov = None if args.list_models == "all" else args.list_models
+        models_by_provider = list_provider_models(provider=prov)
+        print("=== Real Provider Models Available ===")
+        for p_name, model_list in models_by_provider.items():
+            print(f"\n[{p_name.upper()}] ({len(model_list)} models):")
+            for m in model_list[:15]:
+                print(f"  - {m}")
+            if len(model_list) > 15:
+                print(f"  ... and {len(model_list) - 15} more.")
+        return
+
+    if not args.task:
+        sys.exit("Error: --task is required (or specify --list-models).")
 
     # Resolve task dir
     base_tasks_dir = Path(__file__).resolve().parent.parent / "tasks"
@@ -272,8 +334,43 @@ def main() -> None:
         elif not task_dir.exists():
             sys.exit(f"Task directory not found: {args.task}")
 
+    # Handle --dry-run flag
+    if args.dry_run:
+        prompt_chars = (
+            len(task_dir.joinpath("prompt.md").read_text(encoding="utf-8"))
+            if task_dir.joinpath("prompt.md").exists()
+            else 0
+        )
+        starter_chars = sum(
+            len(f.read_text(encoding="utf-8", errors="ignore"))
+            for f in task_dir.joinpath("starter").rglob("*")
+            if f.is_file()
+        )
+        est_tokens = (prompt_chars + starter_chars) // 4
+        model_display = args.model or "default provider model"
+        print("============================= Dry Run Plan =============================")
+        print(f"Task:                    {task_dir.name}")
+        print(f"Task Directory:          {task_dir}")
+        print(f"Execution Mode:          {args.mode}")
+        print(f"Agent Architecture:      {args.agent}")
+        print(f"Model:                   {model_display}")
+        print(f"Number of Planned Runs:  {args.runs}")
+        print(f"Max Steps per Run:       {args.max_steps if args.mode == 'agent' else 1}")
+        print(f"Timeout per Run:         {args.timeout}s")
+        print(f"Est. Context Tokens:     ~{est_tokens:,} tokens per run")
+        print("Est. Cost per Run:       ~$0.01 - $0.05")
+        print(f"Total Est. Cost:         ~${0.01 * args.runs:.2f} - ${0.05 * args.runs:.2f}")
+        print("Status:                  DRY RUN (no network calls made, no credits consumed)")
+        print("========================================================================")
+        return
+
     if args.agent == "llm":
-        runner: AgentRunner = LLMAgentRunner(model_name=args.model)
+        runner: AgentRunner = LLMAgentRunner(
+            model_name=args.model,
+            mode=args.mode,
+            max_steps=args.max_steps,
+            timeout_seconds=args.timeout,
+        )
     elif args.solution:
         sol_path = Path(args.solution).resolve()
         if args.agent == "import":
@@ -297,7 +394,7 @@ def main() -> None:
     )
 
     print(f"\nTask: {res.task_id} | Agent: {res.agent_name} | Run: {res.run_id}")
-    print(f"Status: {'PASSED' if res.passed else 'FAILED'} (Duration: {res.duration_seconds:.2f}s)")
+    print(f"Status: {res.status.upper()} (Duration: {res.duration_seconds:.2f}s)")
     print(f"Tests: {res.tests_passed} passed, {res.tests_failed} failed, {res.tests_total} total")
     if not res.passed:
         print("\n--- Grader Output ---")

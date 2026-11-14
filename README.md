@@ -26,7 +26,7 @@
 - **Engineering Task:** Upgraded existing QuantLab Pro repository into a fully tested, documented, reproducible quantitative ML research platform.
 - **AI Coding Assistant Used:** `<PASTE THE EXACT NAME FROM MY TOOL SETTINGS OR LOGS, or write: not recorded>`
 - **Files Modified/Created:** [`quantlab/agents/`](file:///quantlab/agents/), [`mcp_server/`](file:///mcp_server/), [`quantlab/features/builder.py`](file:///quantlab/features/builder.py), [`quantlab/evaluation/backtest.py`](file:///quantlab/evaluation/backtest.py), [`quantlab/models/trainer.py`](file:///quantlab/models/trainer.py), [`api/main.py`](file:///api/main.py), [`tests/`](file:///tests/), [`docs/dev_log.md`](file:///docs/dev_log.md).
-- **Checks Executed:** `pytest -v tests/` (39 platform tests passed), `pytest -v agent_eval/tests/` (21 harness tests passed), `ruff check .` (0 errors), `python -m mcp_server.client` (stdio integration verified).
+- **Checks Executed:** `pytest -v tests/` (39 platform tests passed), `pytest -v agent_eval/tests/` (28 harness tests passed), `ruff check .` (0 errors), `python -m mcp_server.client` (stdio integration verified).
 - **Observed Outcome:** 100% test suite pass rate, zero lint violations, real MCP SDK stdio integration, reproducible 3-model benchmark evaluations, and persisted model artifacts.
 - **Detailed Log File:** See [`docs/dev_log.md`](file:///docs/dev_log.md) for step-by-step logs and reusable assistant prompts.
 
@@ -38,22 +38,26 @@ Alongside the research platform, this repo includes a small harness that tests h
 
 **What is in `agent_eval/`**
 - 4 tasks: subtle data leakage, an ambiguous spec, repo conventions, and nondeterministic training.
-- Each task has a prompt, a starter repo, hidden pytest graders, a rubric, a reference solution, and known-bad solutions.
-- A runner that executes an agent solution against the grader with timeouts, and a report script that summarizes real results.
+- Each task has a prompt, a starter repo, hidden pytest graders, a rubric, a reference solution, known-bad solutions, and a line-by-line `FAIRNESS.md` mapping.
+- A runner supporting both `--mode oneshot` and `--mode agent` (interactive tool loop with `list_files`, `read_file`, `write_file`, and `run_tests`).
+- Full transcript logging to `agent_eval/runs/<task>/<agent>/<run_id>_transcript.txt`.
+- Provider model auto-discovery (`--list-models`), cost/token estimation (`--dry-run`), and exact API model recording.
 
-**How the graders are checked**
+**How the graders and harness are checked**
 - The reference solution must pass and every known-bad solution must fail (CI).
-- A determinism check runs the grader N times on the same solution and fails on any difference (CI).
+- A determinism check runs each grader 5 times on the same solution and fails on any difference (CI).
 - A fairness test checks that each prompt states every requirement the hidden tests check.
+- A workspace isolation test proves that the hidden grader never exists in the agent workspace during execution.
+- Syntax-tolerant code extraction with explicit `harness_error` classification for unparseable output.
 
 **Results** (from real runs only, see `agent_eval/runs/`)
 
 | Task | Agent | Runs | Passes | Main failure |
 |---|---|---|---|---|
-| 01 Leakage | <<FILL FROM report.py>> | <<n>> | <<n>> | <<from FAILURE_ANALYSIS.md>> |
-| 02 Ambiguous spec | <<FILL>> | <<n>> | <<n>> | <<FILL>> |
-| 03 Conventions | <<FILL>> | <<n>> | <<n>> | <<FILL>> |
-| 04 Nondeterminism | <<FILL>> | <<n>> | <<n>> | <<FILL>> |
+| 01 Leakage | TODO: not run yet | TODO: not run yet | TODO: not run yet | TODO: not run yet |
+| 02 Ambiguous spec | TODO: not run yet | TODO: not run yet | TODO: not run yet | TODO: not run yet |
+| 03 Conventions | TODO: not run yet | TODO: not run yet | TODO: not run yet | TODO: not run yet |
+| 04 Nondeterminism | TODO: not run yet | TODO: not run yet | TODO: not run yet | TODO: not run yet |
 
 See `agent_eval/FAILURE_ANALYSIS.md` for what failed, why, and what I changed in the graders.
 
@@ -204,7 +208,7 @@ pip install -r requirements.txt
 # Platform tests (39 passed)
 pytest -v tests/
 
-# Agent evaluation harness self-tests (21 passed)
+# Agent evaluation harness self-tests (28 passed)
 pytest -v agent_eval/tests/
 ```
 

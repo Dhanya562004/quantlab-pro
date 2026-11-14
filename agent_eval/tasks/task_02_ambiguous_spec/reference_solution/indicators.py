@@ -30,15 +30,8 @@ def compute_rolling_volatility(
     # 2. Rolling standard deviation with ddof=1 (Bessel's correction).
     # Since returns.iloc[0] is NaN, min_periods=window ensures the first valid
     # rolling volatility is at index window (requires window + 1 prices).
+    # Note: Constant prices produce returns of 0.0, which evaluate natively to std=0.0.
     rolling_std = returns.rolling(window=window, min_periods=window, closed="right").std(ddof=1)
-
-    # Handle flat / zero variance periods:
-    # A price window of window + 1 prices produces window zero-return observations.
-    # min_periods=window + 1 guarantees warmup bars (indices 0 to window - 1) remain NaN.
-    rolling_min = prices.rolling(window=window + 1, min_periods=window + 1, closed="right").min()
-    rolling_max = prices.rolling(window=window + 1, min_periods=window + 1, closed="right").max()
-    flat_mask = (rolling_min == rolling_max) & (~rolling_min.isna())
-    rolling_std = rolling_std.mask(flat_mask, 0.0)
 
     if annualized:
         return rolling_std * np.sqrt(trading_days)
