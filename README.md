@@ -24,11 +24,11 @@
 *Verifiable evidence recorded during repository development and testing.*
 
 - **Engineering Task:** Upgraded existing QuantLab Pro repository into a fully tested, documented, reproducible quantitative ML research platform.
-- **AI Coding Assistant Used:** `<PASTE THE EXACT NAME FROM MY TOOL SETTINGS OR LOGS, or write: not recorded>`
-- **Files Modified/Created:** [`quantlab/agents/`](file:///quantlab/agents/), [`mcp_server/`](file:///mcp_server/), [`quantlab/features/builder.py`](file:///quantlab/features/builder.py), [`quantlab/evaluation/backtest.py`](file:///quantlab/evaluation/backtest.py), [`quantlab/models/trainer.py`](file:///quantlab/models/trainer.py), [`api/main.py`](file:///api/main.py), [`tests/`](file:///tests/), [`docs/dev_log.md`](file:///docs/dev_log.md).
+- **AI Coding Assistant Used:** not recorded
+- **Files Modified/Created:** [`quantlab/agents/`](quantlab/agents/), [`mcp_server/`](mcp_server/), [`quantlab/features/builder.py`](quantlab/features/builder.py), [`quantlab/evaluation/backtest.py`](quantlab/evaluation/backtest.py), [`quantlab/models/trainer.py`](quantlab/models/trainer.py), [`api/main.py`](api/main.py), [`tests/`](tests/), [`docs/dev_log.md`](docs/dev_log.md).
 - **Checks Executed:** `pytest -v tests/` (39 platform tests passed), `pytest -v agent_eval/tests/` (28 harness tests passed), `ruff check .` (0 errors), `python -m mcp_server.client` (stdio integration verified).
 - **Observed Outcome:** 100% test suite pass rate, zero lint violations, real MCP SDK stdio integration, reproducible 3-model benchmark evaluations, and persisted model artifacts.
-- **Detailed Log File:** See [`docs/dev_log.md`](file:///docs/dev_log.md) for step-by-step logs and reusable assistant prompts.
+- **Detailed Log File:** See [`docs/dev_log.md`](docs/dev_log.md) for step-by-step logs and reusable assistant prompts.
 
 ---
 
@@ -50,10 +50,9 @@ Alongside the research platform, this repo includes a small harness that tests h
 - A workspace isolation test proves that the hidden grader never exists in the agent workspace during execution.
 - Syntax-tolerant code extraction with explicit `harness_error` classification for unparseable output.
 
-**Evaluation Results**
+### Evaluation Results
 
-Summary of 20 valid evaluation runs (`gemini-3.5-flash-lite`, `--mode oneshot`):
-
+- **Scope:** One model (`gemini-3.5-flash-lite`), `--mode oneshot`, 5 runs per task. `--mode agent` is implemented but not evaluated.
 - **Total valid runs:** 20
 - **Passed:** 14
 - **Failed:** 6
@@ -83,6 +82,24 @@ See [`agent_eval/FAILURE_ANALYSIS.md`](agent_eval/FAILURE_ANALYSIS.md) for what 
 **Limits**
 - Small sample sizes; these are not a benchmark.
 - LLM-rubric checks are marked as non-deterministic and are not part of CI.
+
+### Reproduce the Evaluation
+
+Commands to re-run the evaluation tasks using the runner:
+
+```bash
+# 1. Dry-run to inspect prompt, execution plan, and token/cost estimate without API calls
+python -m agent_eval.runner.run_task --task task_01_leakage --agent llm --model gemini-3.5-flash-lite --mode oneshot --dry-run
+
+# 2. Run 5 evaluation runs per task and record results to agent_eval/runs/
+python -m agent_eval.runner.run_task --task task_01_leakage --agent llm --model gemini-3.5-flash-lite --mode oneshot --runs 5 --record
+python -m agent_eval.runner.run_task --task task_02_ambiguous_spec --agent llm --model gemini-3.5-flash-lite --mode oneshot --runs 5 --record
+python -m agent_eval.runner.run_task --task task_03_conventions --agent llm --model gemini-3.5-flash-lite --mode oneshot --runs 5 --record
+python -m agent_eval.runner.run_task --task task_04_nondeterminism --agent llm --model gemini-3.5-flash-lite --mode oneshot --runs 5 --record
+
+# 3. Generate the summary report from recorded runs
+python -m agent_eval.runner.report
+```
 
 ---
 
@@ -131,13 +148,15 @@ graph TD
 
 ## 🤖 Full Six-Agent Orchestration
 
+The six agents are deterministic Python components, not LLM-driven.
+
 The pipeline executes strictly in this sequence:
 
 1. **`DataQualityAgent`**: Validates schema, pricing boundaries ($High \ge \max(Open, Close)$), date monotonicity, and sample adequacy ($N \ge 100$).
 2. **`PlannerAgent`**: Selects model architecture from allowlisted registry and formulates research plan with forecast horizon $h$.
 3. **`FeatureEngineeringAgent`**: Computes 14 technical features (lags, rolling vol, RSI, MACD), shifts target for future outcome, and fits `StandardScaler` **strictly on training split**.
 4. **`TrainingAgent`**: Trains baseline or PyTorch MLP model with fixed random seeds for reproducibility.
-5. **`EvaluationAgent`**: Evaluates held-out test split, runs research backtest with transaction costs, and flags suspicious accuracy ($>90\%$) or class imbalance.
+5. **`EvaluationAgent`**: Evaluates held-out test split, runs research backtest with transaction costs, and flags suspicious accuracy (> 90%) or class imbalance.
 6. **`AuditorAgent`**: Calculates SHA-256 dataset fingerprint, compiles JSON manifest (`EXP-...`), serializes PyTorch artifacts, and persists run to SQLite database.
 
 ---
